@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: smart-doc-maven-jar
-          path: ~/.m2/repository/com/ly/smart-doc
+          path: ~/.m2/repository/com/github/shalousun
           if-no-files-found: error
 
       - name: Upload Build Log
@@ -87,11 +87,11 @@ jobs:
 
       - name: Move Files to Local Maven Repository
         run: |
-          mkdir -p ~/.m2/repository/com/ly/smart-doc
+          mkdir -p ~/.m2/repository/com/github/shalousun
           echo "Overwriting target directory with new artifacts:"
-          rsync -av --delete ./artifacts/ ~/.m2/repository/com/ly/smart-doc/
+          rsync -av --delete ./artifacts/ ~/.m2/repository/com/github/shalousun/
           echo "Listing files in target directory:"
-          ls -lh ~/.m2/repository/com/ly/smart-doc
+          ls -lh ~/.m2/repository/com/github/shalousun
 
       - name: Update Version in pom.xml
         run: |
@@ -110,9 +110,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: smart-doc-maven-plugin-jar
-          path: |
-            ~/.m2/repository/com/ly/smart-doc
-            ~/.m2/repository/com/github/shalousun/smart-doc-maven-plugin
+          path: ~/.m2/repository/com/github/shalousun
           if-no-files-found: error
 
       - name: Upload Plugin Build Log
@@ -156,10 +154,11 @@ jobs:
 
       - name: Move Files to Local Maven Repository
         run: |
+          mkdir -p ~/.m2/repository/com/github/shalousun
           echo "Overwriting target directory with new artifacts:"
-          rsync -av ./artifacts/ ~/.m2/repository/
-          echo "Listing installed files:"
-          find ~/.m2/repository/com -name "*.jar" -type f 2>/dev/null | head -30
+          rsync -av --delete ./artifacts/ ~/.m2/repository/com/github/shalousun/
+          echo "Listing files in target directory:"
+          ls -lh ~/.m2/repository/com/github/shalousun
 
       - name: Update Smart-Doc Version in pom.xml
         run: |
@@ -286,12 +285,14 @@ jobs:
       - name: Move Files to Local Maven Repository
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" || "${{ matrix.os }}" == "macos-latest" ]]; then
-            rsync -av ./artifacts/ ~/.m2/repository/
+            TARGET_DIR=~/.m2/repository/com/github/shalousun/
+            mkdir -p "$TARGET_DIR" || echo "Directory already exists"
+            rsync -av --delete ./artifacts/ "$TARGET_DIR"
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cp -r ./artifacts/* "$USERPROFILE\\.m2\\repository\\"
+            TARGET_DIR="$USERPROFILE\\.m2\\repository\\com\\ly\\smart-doc\\"
+            mkdir -p "$TARGET_DIR" || echo "Directory already exists"
+            cp -r ./artifacts/* "$TARGET_DIR"
           fi
-          echo "Listing installed files:"
-          find ~/.m2/repository/com -name "*.jar" -type f 2>/dev/null | head -30
         shell: bash
 
 
