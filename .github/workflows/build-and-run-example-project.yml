@@ -110,7 +110,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: smart-doc-maven-plugin-jar
-          path: ~/.m2/repository/com/ly/smart-doc
+          path: |
+            ~/.m2/repository/com/ly/smart-doc
+            ~/.m2/repository/com/github/shalousun/smart-doc-maven-plugin
           if-no-files-found: error
 
       - name: Upload Plugin Build Log
@@ -154,11 +156,10 @@ jobs:
 
       - name: Move Files to Local Maven Repository
         run: |
-          mkdir -p ~/.m2/repository/com/ly/smart-doc
           echo "Overwriting target directory with new artifacts:"
-          rsync -av --delete ./artifacts/ ~/.m2/repository/com/ly/smart-doc/
-          echo "Listing files in target directory:"
-          ls -lh ~/.m2/repository/com/ly/smart-doc
+          rsync -av ./artifacts/ ~/.m2/repository/
+          echo "Listing installed files:"
+          find ~/.m2/repository/com -name "*.jar" -type f 2>/dev/null | head -30
 
       - name: Update Smart-Doc Version in pom.xml
         run: |
@@ -285,14 +286,12 @@ jobs:
       - name: Move Files to Local Maven Repository
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" || "${{ matrix.os }}" == "macos-latest" ]]; then
-            TARGET_DIR=~/.m2/repository/com/ly/smart-doc/
-            mkdir -p "$TARGET_DIR" || echo "Directory already exists"
-            rsync -av --delete ./artifacts/ "$TARGET_DIR"
+            rsync -av ./artifacts/ ~/.m2/repository/
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            TARGET_DIR="$USERPROFILE\\.m2\\repository\\com\\ly\\smart-doc\\"
-            mkdir -p "$TARGET_DIR" || echo "Directory already exists"
-            cp -r ./artifacts/* "$TARGET_DIR"
+            cp -r ./artifacts/* "$USERPROFILE\\.m2\\repository\\"
           fi
+          echo "Listing installed files:"
+          find ~/.m2/repository/com -name "*.jar" -type f 2>/dev/null | head -30
         shell: bash
 
 
