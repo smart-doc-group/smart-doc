@@ -1209,6 +1209,7 @@ public class ApiConfig {
 
 	public ApiConfig setOpenApiTagNameType(OpenApiTagNameTypeEnum openApiTagNameType) {
 		this.openApiTagNameType = openApiTagNameType;
+		System.out.println(openApiTagNameType);
 		return this;
 	}
 
