@@ -40,6 +40,18 @@ public interface SpringMvcAnnotations {
 
 	String DELETE_MAPPING = "DeleteMapping";
 
+	String HTTP_EXCHANGE = "HttpExchange";
+
+	String GET_EXCHANGE = "GetExchange";
+
+	String POST_EXCHANGE = "PostExchange";
+
+	String PUT_EXCHANGE = "PutExchange";
+
+	String PATCH_EXCHANGE = "PatchExchange";
+
+	String DELETE_EXCHANGE = "DeleteExchange";
+
 	@Deprecated
 	String REQUEST_HERDER = "RequestHeader";
 

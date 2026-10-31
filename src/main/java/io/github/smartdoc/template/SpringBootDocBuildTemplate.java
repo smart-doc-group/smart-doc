@@ -128,6 +128,12 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc>, IW
 		EntryAnnotation restController = EntryAnnotation.builder()
 			.setAnnotationName(SpringMvcAnnotations.REST_CONTROLLER);
 		entryAnnotations.put(restController.getAnnotationName(), restController);
+
+		// Spring HTTP Interface (@HttpExchange)
+		EntryAnnotation httpExchange = EntryAnnotation.builder()
+			.setAnnotationName(SpringMvcAnnotations.HTTP_EXCHANGE)
+			.setAnnotationFullyName("org.springframework.web.service.annotation.HttpExchange");
+		entryAnnotations.put(httpExchange.getAnnotationName(), httpExchange);
 		annotations.setEntryAnnotations(entryAnnotations);
 
 		// RequestBody annotation
@@ -420,6 +426,43 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc>, IW
 		MappingAnnotation deleteMapping = this.createMapping(SpringMvcAnnotations.DELETE_MAPPING,
 				Methods.DELETE.getValue(), pathProps, consumes, produces, method, params);
 		mappingAnnotations.put(deleteMapping.getAnnotationName(), deleteMapping);
+
+		// Spring HTTP Interface @HttpExchange
+		MappingAnnotation httpExchange = MappingAnnotation.builder()
+			.setAnnotationName(SpringMvcAnnotations.HTTP_EXCHANGE)
+			.setAnnotationFullyName("org.springframework.web.service.annotation.HttpExchange")
+			.setConsumesProp(consumes)
+			.setProducesProp(produces)
+			.setMethodProp(method)
+			.setParamsProp(params)
+			.setScope("class", "method")
+			.setPathProps(pathProps);
+		mappingAnnotations.put(httpExchange.getAnnotationName(), httpExchange);
+
+		// @GetExchange
+		MappingAnnotation getExchange = this.createMapping(SpringMvcAnnotations.GET_EXCHANGE, Methods.GET.getValue(),
+				pathProps, consumes, produces, method, params);
+		mappingAnnotations.put(getExchange.getAnnotationName(), getExchange);
+
+		// @PostExchange
+		MappingAnnotation postExchange = this.createMapping(SpringMvcAnnotations.POST_EXCHANGE, Methods.POST.getValue(),
+				pathProps, consumes, produces, method, params);
+		mappingAnnotations.put(postExchange.getAnnotationName(), postExchange);
+
+		// @PutExchange
+		MappingAnnotation putExchange = this.createMapping(SpringMvcAnnotations.PUT_EXCHANGE, Methods.PUT.getValue(),
+				pathProps, consumes, produces, method, params);
+		mappingAnnotations.put(putExchange.getAnnotationName(), putExchange);
+
+		// @PatchExchange
+		MappingAnnotation patchExchange = this.createMapping(SpringMvcAnnotations.PATCH_EXCHANGE,
+				Methods.PATCH.getValue(), pathProps, consumes, produces, method, params);
+		mappingAnnotations.put(patchExchange.getAnnotationName(), patchExchange);
+
+		// @DeleteExchange
+		MappingAnnotation deleteExchange = this.createMapping(SpringMvcAnnotations.DELETE_EXCHANGE,
+				Methods.DELETE.getValue(), pathProps, consumes, produces, method, params);
+		mappingAnnotations.put(deleteExchange.getAnnotationName(), deleteExchange);
 
 		// @FeignClient
 		MappingAnnotation feignClient = MappingAnnotation.builder()
