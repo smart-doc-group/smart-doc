@@ -119,11 +119,6 @@ public interface IRestDocTemplate extends IBaseDocBuildTemplate {
 	Logger log = Logger.getLogger(IRestDocTemplate.class.getName());
 
 	/**
-	 * Atomic integer.
-	 */
-	AtomicInteger ATOMIC_INTEGER = new AtomicInteger(1);
-
-	/**
 	 * Processes API data to generate documentation schemas.
 	 * @param projectBuilder Configuration builder for the project, used to obtain project
 	 * configuration information.
@@ -191,19 +186,22 @@ public interface IRestDocTemplate extends IBaseDocBuildTemplate {
 			return apiSchema;
 		}
 		else if (setCustomOrder) {
-			ATOMIC_INTEGER.getAndAdd(maxOrder);
+			// order counter is scoped to this parse so repeated builds start from 1 again
+			AtomicInteger orderNo = new AtomicInteger(1);
+			orderNo.getAndAdd(maxOrder);
 			// while set custom oder
 			final List<ApiDoc> tempList = new ArrayList<>(apiDocList);
 			tempList.forEach(p -> {
 				if (p.getOrder() == 0) {
-					p.setOrder(ATOMIC_INTEGER.getAndAdd(1));
+					p.setOrder(orderNo.getAndAdd(1));
 				}
 			});
 			apiSchema.setApiDatas(
 					tempList.stream().sorted(Comparator.comparing(ApiDoc::getOrder)).collect(Collectors.toList()));
 		}
 		else {
-			apiDocList.forEach(p -> p.setOrder(ATOMIC_INTEGER.getAndAdd(1)));
+			AtomicInteger orderNo = new AtomicInteger(1);
+			apiDocList.forEach(p -> p.setOrder(orderNo.getAndAdd(1)));
 			apiSchema.setApiDatas(apiDocList);
 		}
 		return apiSchema;

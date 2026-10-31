@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  */
 public class ApiConfig {
 
-	private static ApiConfig instance;
+	private static final ThreadLocal<ApiConfig> INSTANCE = new ThreadLocal<>();
 
 	/**
 	 * Web server base url
@@ -528,12 +528,27 @@ public class ApiConfig {
 	 */
 	private boolean allowSelfReference = Boolean.FALSE;
 
+	/**
+	 * Returns the config of the current generation run.
+	 * @return config bound to the current thread
+	 */
 	public static ApiConfig getInstance() {
-		return instance;
+		return INSTANCE.get();
 	}
 
+	/**
+	 * Binds the config to the current generation run.
+	 * @param instance api config
+	 */
 	public static void setInstance(ApiConfig instance) {
-		ApiConfig.instance = instance;
+		INSTANCE.set(instance);
+	}
+
+	/**
+	 * Clears the config bound to the current thread.
+	 */
+	public static void clearInstance() {
+		INSTANCE.remove();
 	}
 
 	public String getCodePath() {

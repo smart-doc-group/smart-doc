@@ -84,11 +84,6 @@ public class GRpcDocBuildTemplate implements IDocBuildTemplate<GrpcApiDoc>, IJav
 	private final static Logger log = Logger.getLogger(GRpcDocBuildTemplate.class.getName());
 
 	/**
-	 * api index
-	 */
-	private final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(1);
-
-	/**
 	 * message map
 	 */
 	private Map<String, Message> messageMap;
@@ -152,8 +147,9 @@ public class GRpcDocBuildTemplate implements IDocBuildTemplate<GrpcApiDoc>, IJav
 			.filter(i -> i.isHasEnums() && !i.getEnums().isEmpty())
 			.flatMap(file -> file.getEnums().stream())
 			.collect(Collectors.toMap(EnumDefinition::getName, EnumDefinition::getValues, (v1, v2) -> v2));
+		int orderNo = 1;
 		for (Service service : services) {
-			GrpcApiDoc gRpcApiDoc = this.getRpcApiDocByService(service);
+			GrpcApiDoc gRpcApiDoc = this.getRpcApiDocByService(service, orderNo++);
 			apiDocList.add(gRpcApiDoc);
 		}
 
@@ -175,11 +171,12 @@ public class GRpcDocBuildTemplate implements IDocBuildTemplate<GrpcApiDoc>, IJav
 	/**
 	 * get rpc api doc by service.
 	 * @param service service
+	 * @param order order of the api doc
 	 * @return rpc api doc
 	 */
-	private GrpcApiDoc getRpcApiDocByService(Service service) {
+	private GrpcApiDoc getRpcApiDocByService(Service service, int order) {
 		GrpcApiDoc gRpcApiDoc = new GrpcApiDoc();
-		gRpcApiDoc.setOrder(ATOMIC_INTEGER.getAndIncrement());
+		gRpcApiDoc.setOrder(order);
 		gRpcApiDoc.setTitle(service.getDescription());
 		gRpcApiDoc.setName(service.getFullName());
 		gRpcApiDoc.setShortName(service.getName());

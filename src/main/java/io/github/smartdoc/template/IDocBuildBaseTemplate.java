@@ -57,6 +57,28 @@ public interface IDocBuildBaseTemplate {
 	boolean supportsFramework(String framework);
 
 	/**
+	 * Removes duplicate qdox classes with the same fully qualified name.
+	 * <p>
+	 * qdox can report one class twice when the same sources are loaded into a project
+	 * builder more than once, for example when several formats are generated from one
+	 * builder. Keeping a single instance prevents the controller from being documented
+	 * twice and its methods from being merged into itself.
+	 * @param classes candidate classes
+	 * @return classes without duplicates, in iteration order
+	 */
+	default Collection<JavaClass> distinctClasses(Collection<JavaClass> classes) {
+		Map<String, JavaClass> distinct = new LinkedHashMap<>(Math.max(16, classes.size()));
+		for (JavaClass javaClass : classes) {
+			String name = javaClass.getFullyQualifiedName();
+			JavaClass existing = distinct.get(name);
+			if (existing == null || (existing.getSource() == null && javaClass.getSource() != null)) {
+				distinct.put(name, javaClass);
+			}
+		}
+		return distinct.values();
+	}
+
+	/**
 	 * pre render.
 	 * @param docBuildHelper docBuildHelper
 	 */

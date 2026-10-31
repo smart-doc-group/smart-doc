@@ -22,9 +22,12 @@ package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
+import io.github.smartdoc.model.ApiSchema;
 import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
 import com.power.common.util.FileUtil;
@@ -32,6 +35,7 @@ import com.thoughtworks.qdox.JavaProjectBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.beetl.core.Template;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -79,13 +83,20 @@ public class HtmlApiDocBuilder {
 	 * @param javaProjectBuilder ProjectDocConfigBuilder
 	 */
 	public static void buildApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
+		new DocGenerator(config, javaProjectBuilder).generate(Collections.singletonList(RenderFormat.HTML));
+	}
+
+	/**
+	 * Renders html from an already parsed schema.
+	 * @param schema parsed api schema
+	 * @param config ApiConfig
+	 * @param javaProjectBuilder qdox project builder
+	 */
+	public static void render(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
-		builderTemplate.checkAndInit(config, Boolean.TRUE);
-		config.setParamsDataToTree(false);
-		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
 		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
 				config.getClassLoader());
-		List<ApiDoc> apiDocList = docBuildTemplate.getApiData(configBuilder).getApiDatas();
+		List<ApiDoc> apiDocList = schema.getApiDatas();
 		builderTemplate.copyJQueryAndCss(config);
 		if (config.isAllInOne()) {
 			apiDocList = docBuildTemplate.handleApiGroup(apiDocList, config);

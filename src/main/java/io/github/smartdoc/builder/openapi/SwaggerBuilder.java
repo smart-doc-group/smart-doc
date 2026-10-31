@@ -25,6 +25,8 @@ import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.MediaType;
 import io.github.smartdoc.constants.OperationIdStrategyEnum;
 import io.github.smartdoc.constants.ParamTypeConstants;
+import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
@@ -44,6 +46,7 @@ import com.thoughtworks.qdox.JavaProjectBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,7 +94,15 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	 * @param projectBuilder JavaDocBuilder of QDox
 	 */
 	public static void buildOpenApi(ApiConfig config, JavaProjectBuilder projectBuilder) {
-		ApiSchema<ApiDoc> apiSchema = INSTANCE.getOpenApiDocs(config, projectBuilder);
+		new DocGenerator(config, projectBuilder).generate(Collections.singletonList(RenderFormat.SWAGGER));
+	}
+
+	/**
+	 * Renders a Swagger 2 document from an already parsed schema.
+	 * @param config Configuration of smart-doc
+	 * @param apiSchema parsed api schema
+	 */
+	public static void render(ApiConfig config, ApiSchema<ApiDoc> apiSchema) {
 		INSTANCE.openApiCreate(config, apiSchema);
 	}
 
@@ -106,6 +117,7 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	 */
 	@Override
 	public void openApiCreate(ApiConfig config, ApiSchema<ApiDoc> apiSchema) {
+		OPERATIONID_ORDER_NO_MAP.clear();
 		this.setComponentKey(getModuleName());
 		Map<String, Object> json = new HashMap<>(8);
 		json.put("swagger", "2.0");

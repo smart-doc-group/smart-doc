@@ -24,12 +24,15 @@ import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.MediaType;
 import io.github.smartdoc.constants.Methods;
 import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
 import io.github.smartdoc.model.ApiMethodDoc;
 import io.github.smartdoc.model.ApiParam;
 import io.github.smartdoc.model.ApiReqParam;
+import io.github.smartdoc.model.ApiSchema;
 import io.github.smartdoc.model.FormData;
 import io.github.smartdoc.model.postman.InfoBean;
 import io.github.smartdoc.model.postman.ItemBean;
@@ -49,6 +52,7 @@ import com.thoughtworks.qdox.JavaProjectBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,11 +81,8 @@ public class PostmanJsonBuilder {
 	 * @param config Smart-doc ApiConfig
 	 */
 	public static void buildPostmanCollection(ApiConfig config) {
-		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
-		builderTemplate.checkAndInit(config, Boolean.TRUE);
 		JavaProjectBuilder javaProjectBuilder = JavaProjectBuilderHelper.create();
-		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		postManCreate(config, configBuilder);
+		buildPostmanCollection(config, javaProjectBuilder);
 	}
 
 	/**
@@ -90,14 +91,20 @@ public class PostmanJsonBuilder {
 	 * @param projectBuilder QDOX avaProjectBuilder
 	 */
 	public static void buildPostmanCollection(ApiConfig config, JavaProjectBuilder projectBuilder) {
-		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
-		builderTemplate.checkAndInit(config, Boolean.TRUE);
-		if (StringUtil.isNotEmpty(config.getServerEnv())) {
-			config.setServerUrl(config.getServerEnv());
-		}
-		config.setParamsDataToTree(false);
-		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, projectBuilder);
-		postManCreate(config, configBuilder);
+		new DocGenerator(config, projectBuilder).generate(Collections.singletonList(RenderFormat.POSTMAN));
+	}
+
+	/**
+	 * Renders a Postman collection from an already parsed schema.
+	 * @param schema parsed api schema
+	 * @param config Smart-doc ApiConfig
+	 * @param projectBuilder qdox project builder
+	 */
+	public static void render(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder projectBuilder) {
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
+				config.getClassLoader());
+		List<ApiDoc> apiDocList = docBuildTemplate.handleApiGroup(schema.getApiDatas(), config);
+		writeCollection(apiDocList, config);
 	}
 
 	/**
@@ -274,12 +281,7 @@ public class PostmanJsonBuilder {
 		return headerBeans;
 	}
 
-	private static void postManCreate(ApiConfig config, ProjectDocConfigBuilder configBuilder) {
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
-		config.setShowJavaType(true);
-		List<ApiDoc> apiDocList = docBuildTemplate.getApiData(configBuilder).getApiDatas();
-		apiDocList = docBuildTemplate.handleApiGroup(apiDocList, config);
+	private static void writeCollection(List<ApiDoc> apiDocList, ApiConfig config) {
 		RequestItem requestItem = new RequestItem();
 		requestItem.setInfo(new InfoBean(config.getProjectName()));
 		List<ItemBean> itemBeans = new ArrayList<>();
