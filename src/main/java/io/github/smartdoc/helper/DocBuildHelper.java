@@ -35,6 +35,7 @@ import com.thoughtworks.qdox.model.JavaType;
 import org.eclipse.jgit.diff.DiffEntry;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,8 @@ import java.util.stream.Collectors;
  * @author Fio
  */
 public class DocBuildHelper {
+
+	private static final Logger logger = Logger.getLogger(DocBuildHelper.class.getName());
 
 	/**
 	 * JavaProjectBuilder
@@ -183,7 +186,8 @@ public class DocBuildHelper {
 							.noneMatch(newDependencyApiClasses::contains);
 					}
 				}
-				catch (Exception ignore) {
+				catch (Exception e) {
+					logger.warning("Failed to resolve dependency class " + item + ": " + e.getMessage());
 				}
 
 				return false;

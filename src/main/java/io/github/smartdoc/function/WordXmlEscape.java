@@ -23,7 +23,6 @@ package io.github.smartdoc.function;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.github.smartdoc.utils.DocUtil;
 import org.beetl.core.Context;
 import org.beetl.core.Function;
 

@@ -130,82 +130,87 @@ public class DocUtil {
 	private static final Logger logger = Logger.getLogger(DocUtil.class.getName());
 
 	/**
-	 * Faker
+	 * Field value map, initialized only when random mock values are used.
 	 */
-	private static final Faker FAKER = new Faker(new Locale("en-US"));
+	private static final class FieldValues {
+
+		private static final Map<String, String> VALUES = create();
+
+		private static Map<String, String> create() {
+			Faker faker = new Faker(Locale.US);
+			Map<String, String> values = new LinkedHashMap<>(64);
+			values.put("uuid-string", UUID.randomUUID().toString());
+			values.put("traceid-string", UUID.randomUUID().toString());
+			values.put("id-string", String.valueOf(RandomUtil.randomInt(1, 200)));
+			values.put("ids-string", String.valueOf(RandomUtil.randomInt(1, 200)));
+			values.put("nickname-string", faker.name().username());
+			values.put("hostname-string", faker.internet().ipV4Address());
+			values.put("name-string", faker.name().username());
+			values.put("author-string", faker.book().author());
+			values.put("url-string", faker.internet().url());
+			values.put("username-string", faker.name().username());
+			values.put("code-int", "0");
+			values.put("index-int", "1");
+			values.put("index-integer", "1");
+			values.put("page-int", "1");
+			values.put("page-integer", "1");
+			values.put("age-int", String.valueOf(RandomUtil.randomInt(0, 70)));
+			values.put("age-integer", String.valueOf(RandomUtil.randomInt(0, 70)));
+			values.put("email-string", faker.internet().emailAddress());
+			values.put("domain-string", faker.internet().domainName());
+			values.put("phone-string", faker.phoneNumber().cellPhone());
+			values.put("mobile-string", faker.phoneNumber().cellPhone());
+			values.put("telephone-string", faker.phoneNumber().phoneNumber());
+			values.put("address-string", faker.address().fullAddress().replace(",", "，"));
+			values.put("ip-string", faker.internet().ipV4Address());
+			values.put("ipv4-string", faker.internet().ipV4Address());
+			values.put("ipv6-string", faker.internet().ipV6Address());
+			values.put("company-string", faker.company().name());
+			values.put("timestamp-long", String.valueOf(System.currentTimeMillis()));
+			values.put("timestamp-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
+			values.put("time-long", String.valueOf(System.currentTimeMillis()));
+			values.put("time-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
+			values.put("birthday-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
+			values.put("birthday-long", String.valueOf(System.currentTimeMillis()));
+			values.put("code-string", String.valueOf(RandomUtil.randomInt(100, 99999)));
+			values.put("message-string", "success,fail".split(",")[RandomUtil.randomInt(0, 1)]);
+			values.put("date-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
+			values.put("date-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
+			values.put("begintime-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
+			values.put("endtime-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
+			values.put("time-localtime",
+					LocalDateTime.now().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+			values.put("state-int", String.valueOf(RandomUtil.randomInt(0, 10)));
+			values.put("state-integer", String.valueOf(RandomUtil.randomInt(0, 10)));
+			values.put("flag-int", String.valueOf(RandomUtil.randomInt(0, 10)));
+			values.put("flag-integer", String.valueOf(RandomUtil.randomInt(0, 10)));
+			values.put("flag-boolean", "true");
+			values.put("flag-Boolean", "false");
+			values.put("idcard-string", IDCardUtil.getIdCard());
+			values.put("sex-int", String.valueOf(RandomUtil.randomInt(0, 2)));
+			values.put("sex-integer", String.valueOf(RandomUtil.randomInt(0, 2)));
+			values.put("gender-int", String.valueOf(RandomUtil.randomInt(0, 2)));
+			values.put("gender-integer", String.valueOf(RandomUtil.randomInt(0, 2)));
+			values.put("limit-int", "10");
+			values.put("limit-integer", "10");
+			values.put("size-int", "10");
+			values.put("size-integer", "10");
+
+			values.put("offset-int", "1");
+			values.put("offset-integer", "1");
+			values.put("offset-long", "1");
+			values.put("version-string", faker.app().version());
+			return values;
+		}
+
+	}
 
 	/**
-	 * En-Faker
+	 * Returns the field value map, initializing it on first use.
+	 * @return field value map
 	 */
-	private static final Faker EN_FAKER = new Faker(new Locale("en-US"));
-
-	/**
-	 * Field value map
-	 */
-	private static final Map<String, String> FIELD_VALUE = new LinkedHashMap<>(64);
-
-	static {
-		FIELD_VALUE.put("uuid-string", UUID.randomUUID().toString());
-		FIELD_VALUE.put("traceid-string", UUID.randomUUID().toString());
-		FIELD_VALUE.put("id-string", String.valueOf(RandomUtil.randomInt(1, 200)));
-		FIELD_VALUE.put("ids-string", String.valueOf(RandomUtil.randomInt(1, 200)));
-		FIELD_VALUE.put("nickname-string", EN_FAKER.name().username());
-		FIELD_VALUE.put("hostname-string", FAKER.internet().ipV4Address());
-		FIELD_VALUE.put("name-string", FAKER.name().username());
-		FIELD_VALUE.put("author-string", FAKER.book().author());
-		FIELD_VALUE.put("url-string", FAKER.internet().url());
-		FIELD_VALUE.put("username-string", FAKER.name().username());
-		FIELD_VALUE.put("code-int", "0");
-		FIELD_VALUE.put("index-int", "1");
-		FIELD_VALUE.put("index-integer", "1");
-		FIELD_VALUE.put("page-int", "1");
-		FIELD_VALUE.put("page-integer", "1");
-		FIELD_VALUE.put("age-int", String.valueOf(RandomUtil.randomInt(0, 70)));
-		FIELD_VALUE.put("age-integer", String.valueOf(RandomUtil.randomInt(0, 70)));
-		FIELD_VALUE.put("email-string", FAKER.internet().emailAddress());
-		FIELD_VALUE.put("domain-string", FAKER.internet().domainName());
-		FIELD_VALUE.put("phone-string", FAKER.phoneNumber().cellPhone());
-		FIELD_VALUE.put("mobile-string", FAKER.phoneNumber().cellPhone());
-		FIELD_VALUE.put("telephone-string", FAKER.phoneNumber().phoneNumber());
-		FIELD_VALUE.put("address-string", FAKER.address().fullAddress().replace(",", "，"));
-		FIELD_VALUE.put("ip-string", FAKER.internet().ipV4Address());
-		FIELD_VALUE.put("ipv4-string", FAKER.internet().ipV4Address());
-		FIELD_VALUE.put("ipv6-string", FAKER.internet().ipV6Address());
-		FIELD_VALUE.put("company-string", FAKER.company().name());
-		FIELD_VALUE.put("timestamp-long", String.valueOf(System.currentTimeMillis()));
-		FIELD_VALUE.put("timestamp-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
-		FIELD_VALUE.put("time-long", String.valueOf(System.currentTimeMillis()));
-		FIELD_VALUE.put("time-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
-		FIELD_VALUE.put("birthday-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
-		FIELD_VALUE.put("birthday-long", String.valueOf(System.currentTimeMillis()));
-		FIELD_VALUE.put("code-string", String.valueOf(RandomUtil.randomInt(100, 99999)));
-		FIELD_VALUE.put("message-string", "success,fail".split(",")[RandomUtil.randomInt(0, 1)]);
-		FIELD_VALUE.put("date-string", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
-		FIELD_VALUE.put("date-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_DAY));
-		FIELD_VALUE.put("begintime-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
-		FIELD_VALUE.put("endtime-date", DateTimeUtil.dateToStr(new Date(), DateTimeUtil.DATE_FORMAT_SECOND));
-		FIELD_VALUE.put("time-localtime",
-				LocalDateTime.now().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-		FIELD_VALUE.put("state-int", String.valueOf(RandomUtil.randomInt(0, 10)));
-		FIELD_VALUE.put("state-integer", String.valueOf(RandomUtil.randomInt(0, 10)));
-		FIELD_VALUE.put("flag-int", String.valueOf(RandomUtil.randomInt(0, 10)));
-		FIELD_VALUE.put("flag-integer", String.valueOf(RandomUtil.randomInt(0, 10)));
-		FIELD_VALUE.put("flag-boolean", "true");
-		FIELD_VALUE.put("flag-Boolean", "false");
-		FIELD_VALUE.put("idcard-string", IDCardUtil.getIdCard());
-		FIELD_VALUE.put("sex-int", String.valueOf(RandomUtil.randomInt(0, 2)));
-		FIELD_VALUE.put("sex-integer", String.valueOf(RandomUtil.randomInt(0, 2)));
-		FIELD_VALUE.put("gender-int", String.valueOf(RandomUtil.randomInt(0, 2)));
-		FIELD_VALUE.put("gender-integer", String.valueOf(RandomUtil.randomInt(0, 2)));
-		FIELD_VALUE.put("limit-int", "10");
-		FIELD_VALUE.put("limit-integer", "10");
-		FIELD_VALUE.put("size-int", "10");
-		FIELD_VALUE.put("size-integer", "10");
-
-		FIELD_VALUE.put("offset-int", "1");
-		FIELD_VALUE.put("offset-integer", "1");
-		FIELD_VALUE.put("offset-long", "1");
-		FIELD_VALUE.put("version-string", EN_FAKER.app().version());
+	private static Map<String, String> fieldValues() {
+		return FieldValues.VALUES;
 	}
 
 	/**
@@ -432,7 +437,7 @@ public class DocUtil {
 		if (!randomMockFlag) {
 			return jsonValueByType(typeName);
 		}
-		for (Map.Entry<String, String> entry : FIELD_VALUE.entrySet()) {
+		for (Map.Entry<String, String> entry : fieldValues().entrySet()) {
 			if (key.contains(entry.getKey())) {
 				value = new StringBuilder(entry.getValue());
 				if (isArray) {

@@ -20,8 +20,6 @@
  */
 package io.github.smartdoc.model.torna;
 
-import com.google.gson.annotations.Expose;
-
 import java.io.Serializable;
 
 /**
