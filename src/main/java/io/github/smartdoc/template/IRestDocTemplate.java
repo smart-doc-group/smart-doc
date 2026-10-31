@@ -1510,9 +1510,6 @@ public interface IRestDocTemplate extends IBaseDocBuildTemplate {
 					if (queryParamsMap.containsKey(paramName)) {
 						mockValue = queryParamsMap.get(paramName);
 					}
-					if (JavaClassValidateUtil.isPrimitive(simpleTypeName)) {
-						requestExample.addJsonBody(mockValue);
-					}
 					if (JavaClassValidateUtil.isFile(fullyQualifiedName)) {
 						break;
 					}
