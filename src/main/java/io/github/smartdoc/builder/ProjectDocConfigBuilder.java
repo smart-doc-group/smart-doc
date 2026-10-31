@@ -232,11 +232,35 @@ public class ProjectDocConfigBuilder {
 	}
 
 	/**
+	 * Returns whether the builder already contains at least one class parsed from source.
+	 * @param builder JavaProjectBuilder
+	 * @return true when source classes are already available
+	 */
+	private boolean hasSourceClass(JavaProjectBuilder builder) {
+		for (JavaClass javaClass : builder.getClasses()) {
+			if (Objects.nonNull(javaClass.getSource())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Load java source.
 	 * @param config ApiConfig
 	 * @param builder JavaProjectBuilder
 	 */
 	private void loadJavaSource(ApiConfig config, JavaProjectBuilder builder) {
+		boolean hasConfiguredPaths = CollectionUtil.isNotEmpty(config.getJarSourcePaths())
+				|| CollectionUtil.isNotEmpty(config.getSourceCodePaths());
+		if (!hasConfiguredPaths && hasSourceClass(builder)) {
+			// The default project sources are already loaded when a caller reuses one
+			// project builder for several parses, for example the aggregate generator
+			// or the maven plugin. Loading them again repeats a full source scan and
+			// creates duplicate classes in qdox. Configured source paths are still
+			// loaded below so that no additional source tree is skipped.
+			return;
+		}
 		if (CollectionUtil.isNotEmpty(config.getJarSourcePaths())) {
 			for (SourceCodePath path : config.getJarSourcePaths()) {
 				loadJarJavaSource(path.getPath(), builder);
