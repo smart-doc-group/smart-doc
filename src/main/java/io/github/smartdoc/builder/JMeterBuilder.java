@@ -22,15 +22,17 @@
 package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
-import io.github.smartdoc.template.IDocBuildTemplate;
+import io.github.smartdoc.model.ApiSchema;
 import com.power.common.util.DateTimeUtil;
 import com.power.common.util.StringUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -66,15 +68,18 @@ public class JMeterBuilder {
 	 * @param javaProjectBuilder ProjectDocConfigBuilder
 	 */
 	public static void buildApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
+		new DocGenerator(config, javaProjectBuilder).generate(Collections.singletonList(RenderFormat.JMETER));
+	}
+
+	/**
+	 * Renders a JMeter script from an already parsed schema.
+	 * @param schema parsed api schema
+	 * @param config ApiConfig
+	 * @param javaProjectBuilder qdox project builder
+	 */
+	public static void render(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
-		builderTemplate.checkAndInit(config, Boolean.TRUE);
-		config.setAdoc(false);
-		config.setShowJavaType(true);
-		config.setParamsDataToTree(Boolean.FALSE);
-		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
-		List<ApiDoc> apiDocList = docBuildTemplate.getApiData(configBuilder).getApiDatas();
+		List<ApiDoc> apiDocList = schema.getApiDatas();
 		String version = config.isCoverOld() ? "" : "-V"
 				+ DateTimeUtil.long2Str(System.currentTimeMillis(), DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
 		String docName;

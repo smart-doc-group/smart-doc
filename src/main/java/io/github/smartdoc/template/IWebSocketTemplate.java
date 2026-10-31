@@ -73,11 +73,6 @@ import java.util.stream.Collectors;
 public interface IWebSocketTemplate {
 
 	/**
-	 * param order AtomicInteger
-	 */
-	AtomicInteger ATOMIC_INTEGER = new AtomicInteger(1);
-
-	/**
 	 * logger
 	 */
 	Logger log = Logger.getLogger(IWebSocketTemplate.class.getName());
@@ -140,18 +135,21 @@ public interface IWebSocketTemplate {
 			Collections.sort(apiDocList);
 		}
 		else if (setCustomOrder) {
-			ATOMIC_INTEGER.getAndAdd(maxOrder);
+			// order counter is scoped to this parse so repeated builds start from 1 again
+			AtomicInteger orderNo = new AtomicInteger(1);
+			orderNo.getAndAdd(maxOrder);
 			// while set custom oder
 			final List<WebSocketDoc> tempList = new ArrayList<>(apiDocList);
 			tempList.forEach(p -> {
 				if (p.getOrder() == 0) {
-					p.setOrder(ATOMIC_INTEGER.getAndAdd(1));
+					p.setOrder(orderNo.getAndAdd(1));
 				}
 			});
 			return tempList.stream().sorted(Comparator.comparing(WebSocketDoc::getOrder)).collect(Collectors.toList());
 		}
 		else {
-			apiDocList.forEach(p -> p.setOrder(ATOMIC_INTEGER.getAndAdd(1)));
+			AtomicInteger orderNo = new AtomicInteger(1);
+			apiDocList.forEach(p -> p.setOrder(orderNo.getAndAdd(1)));
 		}
 		return apiDocList;
 	}

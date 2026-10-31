@@ -65,7 +65,7 @@ public class ApiDoc implements IDoc, Comparable<ApiDoc> {
 	/**
 	 * tag reference
 	 */
-	private final Set<TagDoc> tagRefs = Collections.synchronizedSet(new LinkedHashSet<>());
+	private Set<TagDoc> tagRefs = Collections.synchronizedSet(new LinkedHashSet<>());
 
 	/**
 	 * group
@@ -244,6 +244,32 @@ public class ApiDoc implements IDoc, Comparable<ApiDoc> {
 
 	public Set<TagDoc> getTagRefs() {
 		return tagRefs;
+	}
+
+	/**
+	 * Creates a copy of this api doc that can be mutated by a single renderer without
+	 * affecting other renderers. Child api docs are copied, while the method list and tag
+	 * references are shared because renderers only replace the list reference and never
+	 * mutate methods or tags.
+	 * @return an independent api doc copy for rendering
+	 */
+	public ApiDoc fork() {
+		ApiDoc copy = new ApiDoc();
+		copy.order = this.order;
+		copy.name = this.name;
+		copy.alias = this.alias;
+		copy.tags = this.tags;
+		copy.tagRefs = this.tagRefs;
+		copy.group = this.group;
+		copy.packageName = this.packageName;
+		copy.list = this.list;
+		copy.desc = this.desc;
+		copy.link = this.link;
+		copy.author = this.author;
+		copy.isFolder = this.isFolder;
+		copy.detail = this.detail;
+		copy.childrenApiDocs = new ArrayList<>();
+		return copy;
 	}
 
 	public String getDetail() {

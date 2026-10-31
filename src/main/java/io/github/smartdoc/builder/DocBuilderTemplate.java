@@ -25,6 +25,7 @@ import io.github.smartdoc.constants.HighlightStyle;
 import io.github.smartdoc.constants.TemplateVariable;
 import io.github.smartdoc.constants.TornaConstants;
 import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.RunClock;
 import io.github.smartdoc.model.*;
 import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
@@ -124,7 +125,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 	 */
 	public Template buildAllRenderDocTemplate(List<ApiDoc> apiDocList, ApiConfig config,
 			JavaProjectBuilder javaProjectBuilder, String template, ApiDoc apiDoc, String index) {
-		String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+		String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
 		Template tpl = BeetlTemplateUtil.getByName(template);
 		String style = config.getStyle();
@@ -135,7 +136,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 		tpl.binding(TemplateVariable.ERROR_CODE_LIST.getVariable(), errorCodeList);
 		tpl.binding(TemplateVariable.VERSION_LIST.getVariable(), config.getRevisionLogs());
 		tpl.binding(TemplateVariable.LANGUAGE.getVariable(), config.getLanguage());
-		tpl.binding(TemplateVariable.VERSION.getVariable(), NOW);
+		tpl.binding(TemplateVariable.VERSION.getVariable(), RunClock.now());
 		tpl.binding(TemplateVariable.INDEX_ALIAS.getVariable(), index);
 		tpl.binding(TemplateVariable.CREATE_TIME.getVariable(), strTime);
 		tpl.binding(TemplateVariable.PROJECT_NAME.getVariable(), config.getProjectName());
@@ -314,7 +315,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 	public void buildErrorCodeDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder, List<ApiDoc> apiDocList,
 			String template, String outPutFileName, String indexAlias) {
 		List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
-		String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+		String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		Template errorTemplate = BeetlTemplateUtil.getByName(template);
 		errorTemplate.binding(TemplateVariable.PROJECT_NAME.getVariable(), config.getProjectName());
 		String style = config.getStyle();
@@ -330,7 +331,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 		this.setCssCDN(config, errorTemplate);
 		List<ApiDocDict> apiDocDictList = DocUtil.buildDictionary(config, javaProjectBuilder);
 		errorTemplate.binding(TemplateVariable.CREATE_TIME.getVariable(), strTime);
-		errorTemplate.binding(TemplateVariable.VERSION.getVariable(), NOW);
+		errorTemplate.binding(TemplateVariable.VERSION.getVariable(), RunClock.now());
 		errorTemplate.binding(TemplateVariable.DICT_LIST.getVariable(), apiDocDictList);
 		errorTemplate.binding(TemplateVariable.INDEX_ALIAS.getVariable(), indexAlias);
 		errorTemplate.binding(TemplateVariable.API_DOC_LIST.getVariable(), apiDocList);
@@ -355,7 +356,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 			String template, String outPutFileName, String indexAlias) {
 		List<ApiDocDict> directoryList = DocUtil.buildDictionary(config, javaProjectBuilder);
 		Template mapper = BeetlTemplateUtil.getByName(template);
-		String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+		String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		mapper.binding(TemplateVariable.PROJECT_NAME.getVariable(), config.getProjectName());
 		String style = config.getStyle();
 		mapper.binding(TemplateVariable.HIGH_LIGHT_CSS_LINK.getVariable(), config.getHighlightStyleLink());
@@ -371,7 +372,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 		}
 
 		mapper.binding(TemplateVariable.CREATE_TIME.getVariable(), strTime);
-		mapper.binding(TemplateVariable.VERSION.getVariable(), NOW);
+		mapper.binding(TemplateVariable.VERSION.getVariable(), RunClock.now());
 		mapper.binding(TemplateVariable.API_DOC_LIST.getVariable(), apiDocList);
 		mapper.binding(TemplateVariable.INDEX_ALIAS.getVariable(), indexAlias);
 		mapper.binding(TemplateVariable.BACKGROUND.getVariable(), HighlightStyle.getBackgroundColor(style));
@@ -410,7 +411,7 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 		this.setDirectoryLanguageVariable(config, mapper);
 		// set css cdn
 		this.setCssCDN(config, mapper);
-		String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+		String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		mapper.binding(TemplateVariable.CREATE_TIME.getVariable(), strTime);
 		mapper.binding(TemplateVariable.DICT_LIST.getVariable(), directoryList);
 		return mapper;

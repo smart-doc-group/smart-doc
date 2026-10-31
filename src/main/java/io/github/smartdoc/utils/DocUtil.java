@@ -297,6 +297,32 @@ public class DocUtil {
 	private static final Map<String, Set<String>> FILTER_METHOD_CACHE = new ConcurrentHashMap<>();
 
 	/**
+	 * Random mock flag of the current generation run.
+	 */
+	private static final ThreadLocal<Boolean> RANDOM_MOCK = new ThreadLocal<>();
+
+	/**
+	 * Sets the random mock flag of the current generation run.
+	 * @param randomMock whether random examples are generated
+	 */
+	public static void setRandomMock(boolean randomMock) {
+		RANDOM_MOCK.set(randomMock);
+	}
+
+	/**
+	 * Returns the random mock flag of the current generation run. Falls back to the
+	 * legacy system property when called outside a generation run.
+	 * @return whether random examples are generated
+	 */
+	private static boolean isRandomMock() {
+		Boolean randomMock = RANDOM_MOCK.get();
+		if (randomMock != null) {
+			return randomMock;
+		}
+		return Boolean.parseBoolean(System.getProperty(DocGlobalConstants.RANDOM_MOCK));
+	}
+
+	/**
 	 * Generate a random value based on java type name.
 	 * @param typeName field type name
 	 * @return random value
@@ -307,8 +333,7 @@ public class DocUtil {
 		if ("Instant".equalsIgnoreCase(type)) {
 			type = "LocalDateTime";
 		}
-		String randomMock = System.getProperty(DocGlobalConstants.RANDOM_MOCK);
-		boolean randomMockFlag = Boolean.parseBoolean(randomMock);
+		boolean randomMockFlag = isRandomMock();
 		String value = randomMockFlag ? RandomUtil.randomValueByType(type)
 				: RandomUtil.generateDefaultValueByType(type);
 		if (javaPrimaryType(type)) {
@@ -329,8 +354,7 @@ public class DocUtil {
 	 * @return random value
 	 */
 	public static String getValByTypeAndFieldName(String typeName, String filedName) {
-		String randomMock = System.getProperty(DocGlobalConstants.RANDOM_MOCK);
-		boolean randomMockFlag = Boolean.parseBoolean(randomMock);
+		boolean randomMockFlag = isRandomMock();
 		boolean isArray = true;
 		String type = typeName.contains("java.lang") ? typeName.substring(typeName.lastIndexOf(".") + 1) : typeName;
 		String key = filedName.toLowerCase() + "-" + type.toLowerCase();

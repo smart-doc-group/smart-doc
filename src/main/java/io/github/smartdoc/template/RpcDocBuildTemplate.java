@@ -58,11 +58,6 @@ import java.util.stream.Collectors;
 public class RpcDocBuildTemplate implements IDocBuildTemplate<RpcApiDoc>, IWebSocketDocBuildTemplate<WebSocketDoc>,
 		IJavadocDocTemplate<RpcJavaMethod> {
 
-	/**
-	 * api index
-	 */
-	private final AtomicInteger ATOMIC_INTEGER = new AtomicInteger(1);
-
 	@Override
 	public boolean supportsFramework(String framework) {
 		return FrameworkEnum.DUBBO.getFramework().equalsIgnoreCase(framework);
@@ -108,19 +103,22 @@ public class RpcDocBuildTemplate implements IDocBuildTemplate<RpcApiDoc>, IWebSo
 			return apiSchema;
 		}
 		else if (setCustomOrder) {
-			ATOMIC_INTEGER.getAndAdd(maxOrder);
+			// order counter is scoped to this parse so repeated builds start from 1 again
+			AtomicInteger orderNo = new AtomicInteger(1);
+			orderNo.getAndAdd(maxOrder);
 			// while set custom oder
 			final List<RpcApiDoc> tempList = new ArrayList<>(apiDocList);
 			tempList.forEach(p -> {
 				if (p.getOrder() == 0) {
-					p.setOrder(ATOMIC_INTEGER.getAndAdd(1));
+					p.setOrder(orderNo.getAndAdd(1));
 				}
 			});
 			apiSchema.setApiDatas(
 					tempList.stream().sorted(Comparator.comparing(RpcApiDoc::getOrder)).collect(Collectors.toList()));
 		}
 		else {
-			apiDocList.forEach(p -> p.setOrder(ATOMIC_INTEGER.getAndAdd(1)));
+			AtomicInteger orderNo = new AtomicInteger(1);
+			apiDocList.forEach(p -> p.setOrder(orderNo.getAndAdd(1)));
 			apiSchema.setApiDatas(apiDocList);
 		}
 		return apiSchema;

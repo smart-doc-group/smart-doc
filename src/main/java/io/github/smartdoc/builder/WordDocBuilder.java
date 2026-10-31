@@ -22,6 +22,8 @@ package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
@@ -33,6 +35,7 @@ import com.power.common.util.FileUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import org.beetl.core.Template;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -87,14 +90,33 @@ public class WordDocBuilder {
 	 * @throws Exception exception
 	 */
 	public static void buildApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) throws Exception {
+		new DocGenerator(config, javaProjectBuilder).generate(Collections.singletonList(RenderFormat.WORD));
+	}
+
+	/**
+	 * Renders a Word document from an already parsed schema.
+	 * @param schema parsed api schema
+	 * @param config ApiConfig
+	 * @param javaProjectBuilder qdox project builder
+	 */
+	public static void render(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
+		try {
+			renderDoc(schema, config, javaProjectBuilder);
+		}
+		catch (RuntimeException e) {
+			throw e;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e.getMessage(), e);
+		}
+	}
+
+	private static void renderDoc(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder javaProjectBuilder)
+			throws Exception {
 		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
-		builderTemplate.checkAndInit(config, Boolean.TRUE);
-		config.setParamsDataToTree(false);
-		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
 		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
 				config.getClassLoader());
-		ApiSchema<ApiDoc> apiSchema = docBuildTemplate.getApiData(configBuilder);
-		List<ApiDoc> apiDocList = apiSchema.getApiDatas();
+		List<ApiDoc> apiDocList = schema.getApiDatas();
 
 		if (config.isAllInOne()) {
 			String version = config.isCoverOld() ? "" : "-V" + DateTimeUtil.long2Str(System.currentTimeMillis(),

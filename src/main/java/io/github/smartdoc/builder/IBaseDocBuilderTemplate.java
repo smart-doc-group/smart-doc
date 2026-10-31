@@ -26,6 +26,7 @@ import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.constants.HighLightJsConstants;
 import io.github.smartdoc.constants.TemplateVariable;
 import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.RunClock;
 import io.github.smartdoc.model.*;
 import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
@@ -61,11 +62,6 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 	 * Logger for the class.
 	 */
 	Logger log = Logger.getLogger(IBaseDocBuilderTemplate.class.getName());
-
-	/**
-	 * now currentTimeMillis.
-	 */
-	long NOW = System.currentTimeMillis();
 
 	/**
 	 * get all doc api data
@@ -109,17 +105,14 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 		if (Objects.isNull(config)) {
 			throw new NullPointerException("ApiConfig can't be null");
 		}
-		System.setProperty(DocGlobalConstants.RANDOM_MOCK, String.valueOf(config.isRandomMock()));
-		if (Objects.nonNull(config.getLanguage())) {
-			System.setProperty(DocGlobalConstants.DOC_LANGUAGE, config.getLanguage().getCode());
-		}
-		else {
+		RunClock.beginLegacyRunIfNeeded();
+		DocUtil.setRandomMock(config.isRandomMock());
+		if (Objects.isNull(config.getLanguage())) {
 			// default is chinese
 			config.setLanguage(DocLanguage.CHINESE);
-			System.setProperty(DocGlobalConstants.DOC_LANGUAGE, DocLanguage.CHINESE.getCode());
 		}
 		if (Objects.isNull(config.getRevisionLogs())) {
-			String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+			String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 			config.setRevisionLogs(RevisionLog.builder()
 				.setRevisionTime(strTime)
 				.setAuthor("@" + System.getProperty("user.name"))
@@ -203,12 +196,12 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 	 */
 	default void bindingCommonVariable(ApiConfig config, JavaProjectBuilder javaProjectBuilder, Template template,
 			boolean apiDocListEmpty) {
-		String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+		String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
 		template.binding(TemplateVariable.ERROR_CODE_LIST.getVariable(), errorCodeList);
 		template.binding(TemplateVariable.VERSION_LIST.getVariable(), config.getRevisionLogs());
 		template.binding(TemplateVariable.DEPENDENCY_LIST.getVariable(), config.getRpcApiDependencies());
-		template.binding(TemplateVariable.VERSION.getVariable(), NOW);
+		template.binding(TemplateVariable.VERSION.getVariable(), RunClock.now());
 		template.binding(TemplateVariable.CREATE_TIME.getVariable(), strTime);
 		template.binding(TemplateVariable.PROJECT_NAME.getVariable(), config.getProjectName());
 		List<ApiDocDict> apiDocDictList = DocUtil.buildDictionary(config, javaProjectBuilder);
@@ -325,7 +318,7 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 	default Template buildErrorCodeDocTemplate(ApiConfig config, String template,
 			JavaProjectBuilder javaProjectBuilder) {
 		List<ApiErrorCode> errorCodeList = DocUtil.errorCodeDictToList(config, javaProjectBuilder);
-		String strTime = DateTimeUtil.long2Str(NOW, DateTimeUtil.DATE_FORMAT_SECOND);
+		String strTime = DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		Template tpl = BeetlTemplateUtil.getByName(template);
 		this.setCssCDN(config, tpl);
 		tpl.binding(TemplateVariable.CREATE_TIME.getVariable(), strTime);

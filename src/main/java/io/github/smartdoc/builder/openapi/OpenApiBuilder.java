@@ -26,6 +26,8 @@ import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.Methods;
 import io.github.smartdoc.constants.OpenApiTagNameTypeEnum;
 import io.github.smartdoc.constants.ParamTypeConstants;
+import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
@@ -44,6 +46,7 @@ import com.thoughtworks.qdox.JavaProjectBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -92,7 +95,15 @@ public class OpenApiBuilder extends AbstractOpenApiBuilder {
 	 * @param projectBuilder JavaDocBuilder of QDox
 	 */
 	public static void buildOpenApi(ApiConfig config, JavaProjectBuilder projectBuilder) {
-		ApiSchema<ApiDoc> apiSchema = INSTANCE.getOpenApiDocs(config, projectBuilder);
+		new DocGenerator(config, projectBuilder).generate(Collections.singletonList(RenderFormat.OPENAPI));
+	}
+
+	/**
+	 * Renders an OpenApi 3 document from an already parsed schema.
+	 * @param config Configuration of smart-doc
+	 * @param apiSchema parsed api schema
+	 */
+	public static void render(ApiConfig config, ApiSchema<ApiDoc> apiSchema) {
 		INSTANCE.openApiCreate(config, apiSchema);
 	}
 
@@ -103,6 +114,7 @@ public class OpenApiBuilder extends AbstractOpenApiBuilder {
 
 	@Override
 	public void openApiCreate(ApiConfig config, ApiSchema<ApiDoc> apiSchema) {
+		OPERATIONID_ORDER_NO_MAP.clear();
 		this.setComponentKey(getModuleName());
 		Map<String, Object> json = new LinkedHashMap<>(8);
 		json.put("openapi", "3.1.0");

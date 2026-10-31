@@ -52,7 +52,8 @@ public interface IDocBuildTemplate<T extends IDoc> extends IDocBuildBaseTemplate
 
 		this.preRender(docBuildHelper);
 		// get candidate classes
-		Collection<JavaClass> candidateClasses = this.getCandidateClasses(projectBuilder, docBuildHelper);
+		Collection<JavaClass> candidateClasses = this
+			.distinctClasses(this.getCandidateClasses(projectBuilder, docBuildHelper));
 		ApiSchema<T> apiSchema = this.renderApi(projectBuilder, candidateClasses);
 
 		if (Objects.isNull(apiSchema)) {
