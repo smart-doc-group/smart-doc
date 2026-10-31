@@ -23,6 +23,7 @@ package io.github.smartdoc.builder.openapi;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.MediaType;
+import io.github.smartdoc.constants.OperationIdStrategyEnum;
 import io.github.smartdoc.constants.ParamTypeConstants;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
@@ -63,6 +64,11 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	 * Singleton
 	 */
 	private static final SwaggerBuilder INSTANCE = new SwaggerBuilder();
+
+	/**
+	 * OperationId OrderNo Map
+	 */
+	private static final Map<String, Integer> OPERATIONID_ORDER_NO_MAP = new HashMap<>();
 
 	/**
 	 * private constructor
@@ -178,10 +184,16 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 		request.put("parameters", parameters);
 		request.put("responses", this.buildResponses(apiConfig, apiMethodDoc, apiExceptionStatuses));
 		request.put("deprecated", apiMethodDoc.isDeprecated());
-		String operationId = apiMethodDoc.getUrl().replace(apiMethodDoc.getServerUrl(), "");
-		// make sure operationId is unique and can be used as a method name
-		request.put("operationId",
-				apiMethodDoc.getName() + "_" + apiMethodDoc.getMethodId() + "UsingOn" + apiMethodDoc.getType());
+		OperationIdStrategyEnum operationIdStrategy = apiConfig.getOperationIdStrategy();
+		if (Objects.isNull(operationIdStrategy)) {
+			// Keep the historical Swagger operationId when no strategy is configured.
+			request.put("operationId",
+					apiMethodDoc.getName() + "_" + apiMethodDoc.getMethodId() + "UsingOn" + apiMethodDoc.getType());
+		}
+		else {
+			request.put("operationId",
+					this.buildOperationId(operationIdStrategy, apiMethodDoc, OPERATIONID_ORDER_NO_MAP));
+		}
 
 		return request;
 	}

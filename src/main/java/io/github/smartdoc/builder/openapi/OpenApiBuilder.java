@@ -179,16 +179,8 @@ public class OpenApiBuilder extends AbstractOpenApiBuilder {
 		paths.add(apiMethodDoc.getType());
 
 		// add operationId
-		String methodName = apiMethodDoc.getMethodName();
-		if (OPERATIONID_ORDER_NO_MAP.containsKey(methodName)) {
-			int order = OPERATIONID_ORDER_NO_MAP.get(methodName);
-			request.put("operationId", methodName + "_" + order);
-			OPERATIONID_ORDER_NO_MAP.put(methodName, order + 1);
-		}
-		else {
-			request.put("operationId", methodName);
-			OPERATIONID_ORDER_NO_MAP.put(methodName, 1);
-		}
+		request.put("operationId",
+				this.buildOperationId(apiConfig.getOperationIdStrategy(), apiMethodDoc, OPERATIONID_ORDER_NO_MAP));
 
 		// add extension attribution
 		if (apiMethodDoc.getExtensions() != null) {

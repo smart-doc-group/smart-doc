@@ -29,6 +29,7 @@ import io.github.smartdoc.constants.ComponentTypeEnum;
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.MediaType;
 import io.github.smartdoc.constants.Methods;
+import io.github.smartdoc.constants.OperationIdStrategyEnum;
 import io.github.smartdoc.constants.ParamTypeConstants;
 import io.github.smartdoc.factory.BuildTemplateFactory;
 import io.github.smartdoc.model.ApiConfig;
@@ -710,6 +711,42 @@ public abstract class AbstractOpenApiBuilder {
 			logger
 				.warning("Error parsing value: " + originalValue + " for type: " + type + ", error: " + e.getMessage());
 			return originalValue;
+		}
+	}
+
+	/**
+	 * Build the operation id according to the configured strategy.
+	 * @param strategy the operation id strategy, {@code null} means
+	 * {@link OperationIdStrategyEnum#METHOD_NAME}
+	 * @param apiMethodDoc the api method
+	 * @param operationIdOrderNoMap counter used to keep method name based operation ids
+	 * unique
+	 * @return the operation id
+	 */
+	protected String buildOperationId(OperationIdStrategyEnum strategy, ApiMethodDoc apiMethodDoc,
+			Map<String, Integer> operationIdOrderNoMap) {
+		if (Objects.isNull(strategy)) {
+			strategy = OperationIdStrategyEnum.METHOD_NAME;
+		}
+		switch (strategy) {
+			case METHOD_ID:
+				return apiMethodDoc.getMethodId();
+			case PATH_METHOD_HTTP:
+				List<String> pathSegments = new ArrayList<>(
+						OpenApiSchemaUtil.getPatternResult("[A-Za-z0-9_]+", apiMethodDoc.getPath()));
+				pathSegments.add(apiMethodDoc.getMethodName());
+				pathSegments.add(apiMethodDoc.getType());
+				return pathSegments.stream().filter(StringUtil::isNotEmpty).collect(Collectors.joining("-"));
+			case METHOD_NAME:
+			default:
+				String methodName = apiMethodDoc.getMethodName();
+				if (operationIdOrderNoMap.containsKey(methodName)) {
+					int order = operationIdOrderNoMap.get(methodName);
+					operationIdOrderNoMap.put(methodName, order + 1);
+					return methodName + "_" + order;
+				}
+				operationIdOrderNoMap.put(methodName, 1);
+				return methodName;
 		}
 	}
 
