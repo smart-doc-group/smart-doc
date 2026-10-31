@@ -261,7 +261,8 @@
           </tbody>
         </table>
         <%}%><%if(isNotEmpty(doc.requestParams)&&doc.contentType!="application/json"){%>
-        <div class="paragraph"><p><strong>Body-parameters:</strong></p></div>
+        <details class="collapse-section" open>
+        <summary><strong>Body-parameters:</strong></summary>
         <table class="tableblock frame-all grid-all spread">
           <colgroup>
             <col style="width: 5%;">
@@ -311,8 +312,10 @@
           <%}%>
           </tbody>
         </table>
+        </details>
         <%}%><%if(isNotEmpty(doc.requestParams)&&doc.contentType=="application/json"){%>
-        <div class="paragraph"><p><strong>Body-parameters:</strong></p></div>
+        <details class="collapse-section" open>
+        <summary><strong>Body-parameters:</strong></summary>
         <table class="tableblock frame-all grid-all spread">
           <colgroup>
             <col style="width: 20%;">
@@ -344,6 +347,7 @@
           <%}%>
           </tbody>
         </table>
+        </details>
         <%}%><%if(isNotEmpty(doc.requestExample.jsonBody)&&isRequestExample){%>
         <div class="paragraph"><p><strong>Request-body:</strong></p></div>
         <div class="listingblock">
@@ -352,7 +356,8 @@
           </div>
         </div>
         <%}%><%if(isNotEmpty(doc.responseParams)){%>
-        <div class="paragraph"><p><strong>Response-fields:</strong></p></div>
+        <details class="collapse-section" open>
+        <summary><strong>Response-fields:</strong></summary>
         <table class="tableblock frame-all grid-all spread">
           <colgroup>
             <col style="width: 25%;">
@@ -378,6 +383,7 @@
           <%}%>
           </tbody>
         </table>
+        </details>
         <%}%>
         <div class="paragraph">
           <p><strong>
