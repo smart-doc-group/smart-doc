@@ -283,7 +283,7 @@ public class PostmanJsonBuilder {
 
 	private static void writeCollection(List<ApiDoc> apiDocList, ApiConfig config) {
 		RequestItem requestItem = new RequestItem();
-		requestItem.setInfo(new InfoBean(config.getProjectName()));
+		requestItem.setInfo(new InfoBean(config.getProjectName(), config.isReproducible()));
 		List<ItemBean> itemBeans = new ArrayList<>();
 		apiDocList.forEach(apiDoc -> {
 			ItemBean itemBean = buildItemBean(apiDoc);

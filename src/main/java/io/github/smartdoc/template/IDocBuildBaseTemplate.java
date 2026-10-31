@@ -40,6 +40,7 @@ import com.thoughtworks.qdox.model.JavaClass;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +49,11 @@ import java.util.stream.Collectors;
  * @author linwumingshi
  */
 public interface IDocBuildBaseTemplate {
+
+	/**
+	 * Logger for the class.
+	 */
+	Logger LOGGER = Logger.getLogger(IDocBuildBaseTemplate.class.getName());
 
 	/**
 	 * support framework.
@@ -186,7 +192,8 @@ public interface IDocBuildBaseTemplate {
 				JavaClass javaClass = javaProjectBuilder.getClassByName(item.getNewQualifiedName());
 				result.add(javaClass);
 			}
-			catch (Exception ignore) {
+			catch (Exception e) {
+				LOGGER.warning("Failed to load changed class " + item.getNewQualifiedName() + ": " + e.getMessage());
 			}
 		});
 
@@ -214,7 +221,8 @@ public interface IDocBuildBaseTemplate {
 		try {
 			javaClass = javaProjectBuilder.getClassByName(javaClassName);
 		}
-		catch (Exception ignore) {
+		catch (Exception e) {
+			LOGGER.warning("Failed to load class " + javaClassName + ": " + e.getMessage());
 		}
 
 		if (javaClass == null) {

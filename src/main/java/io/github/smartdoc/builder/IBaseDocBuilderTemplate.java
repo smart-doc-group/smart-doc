@@ -105,7 +105,9 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 		if (Objects.isNull(config)) {
 			throw new NullPointerException("ApiConfig can't be null");
 		}
-		RunClock.beginLegacyRunIfNeeded();
+		RunClock.beginLegacyRunIfNeeded(
+				config.isReproducible() ? RunClock.REPRODUCIBLE_TIMESTAMP : System.currentTimeMillis());
+		DocUtil.setReproducible(config.isReproducible());
 		DocUtil.setRandomMock(config.isRandomMock());
 		if (Objects.isNull(config.getLanguage())) {
 			// default is chinese

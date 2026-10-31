@@ -21,6 +21,7 @@
 package io.github.smartdoc.builder.rpc;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
+import io.github.smartdoc.generation.RunClock;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.rpc.RpcApiDoc;
@@ -58,8 +59,8 @@ public class RpcMarkdownBuilder {
 		RpcDocBuilderTemplate builderTemplate = new RpcDocBuilderTemplate();
 		List<RpcApiDoc> apiDocList = builderTemplate.getApiDoc(false, true, false, apiConfig, javaProjectBuilder);
 		if (apiConfig.isAllInOne()) {
-			String version = apiConfig.isCoverOld() ? "" : "-V" + DateTimeUtil.long2Str(System.currentTimeMillis(),
-					DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
+			String version = apiConfig.isCoverOld() ? ""
+					: "-V" + DateTimeUtil.long2Str(RunClock.now(), DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
 			String docName = builderTemplate.allInOneDocName(apiConfig, "rpc-all" + version,
 					DocGlobalConstants.MARKDOWN_EXTENSION);
 			builderTemplate.buildAllInOne(apiDocList, apiConfig, javaProjectBuilder,

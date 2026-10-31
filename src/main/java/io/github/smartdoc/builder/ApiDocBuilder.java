@@ -21,6 +21,7 @@
 package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
+import io.github.smartdoc.generation.RunClock;
 import io.github.smartdoc.factory.BuildTemplateFactory;
 import io.github.smartdoc.generation.DocGenerator;
 import io.github.smartdoc.generation.RenderFormat;
@@ -78,8 +79,8 @@ public class ApiDocBuilder {
 				config.getClassLoader());
 		List<ApiDoc> apiDocList = schema.getApiDatas();
 		if (config.isAllInOne()) {
-			String version = config.isCoverOld() ? "" : "-V" + DateTimeUtil.long2Str(System.currentTimeMillis(),
-					DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
+			String version = config.isCoverOld() ? ""
+					: "-V" + DateTimeUtil.long2Str(RunClock.now(), DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
 			String docName = builderTemplate.allInOneDocName(config,
 					"AllInOne" + version + DocGlobalConstants.MARKDOWN_EXTENSION,
 					DocGlobalConstants.MARKDOWN_EXTENSION);

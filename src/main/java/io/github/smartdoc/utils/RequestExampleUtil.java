@@ -34,6 +34,7 @@ import io.github.smartdoc.model.request.CurlRequest;
 import com.power.common.util.UrlUtil;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -197,6 +198,10 @@ public class RequestExampleUtil {
 			// Process other form data if available
 			List<FormData> formDataList = formDataGroupMap.getOrDefault(Boolean.FALSE, new ArrayList<>());
 			if (!formDataList.isEmpty()) {
+				if (DocUtil.isReproducible()) {
+					formDataList = new ArrayList<>(formDataList);
+					formDataList.sort(Comparator.comparing(FormData::getKey));
+				}
 				final Map<String, String> formDataToMap = DocUtil.formDataToMap(formDataList);
 				curlRequest.setBody(UrlUtil.urlJoin(DocGlobalConstants.EMPTY, formDataToMap)
 					.replace("?", DocGlobalConstants.EMPTY));

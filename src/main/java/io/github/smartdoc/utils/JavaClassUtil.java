@@ -67,6 +67,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -158,6 +159,13 @@ public class JavaClassUtil {
 		}
 		if (cls1.isInterface()) {
 			List<JavaMethod> methods = cls1.getMethods();
+			if (DocUtil.isReproducible()) {
+				// qdox can return interface methods in an order that depends on how the
+				// class library resolved them, which makes the generated fields unstable
+				// across JVMs
+				methods = new ArrayList<>(methods);
+				methods.sort(Comparator.comparing(JavaMethod::getName));
+			}
 			for (JavaMethod javaMethod : methods) {
 				String methodName = javaMethod.getName();
 				int paramSize = javaMethod.getParameters().size();

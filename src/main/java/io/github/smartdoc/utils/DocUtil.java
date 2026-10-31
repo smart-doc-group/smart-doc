@@ -30,6 +30,7 @@ import io.github.smartdoc.constants.JakartaJaxrsAnnotations;
 import io.github.smartdoc.constants.JavaTypeConstants;
 import io.github.smartdoc.constants.MediaType;
 import io.github.smartdoc.extension.dict.DictionaryValuesResolver;
+import io.github.smartdoc.generation.RunClock;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDataDictionary;
 import io.github.smartdoc.model.ApiDocDict;
@@ -70,14 +71,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.MonthDay;
-import java.time.OffsetDateTime;
-import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -94,6 +92,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
@@ -112,6 +111,11 @@ import java.util.zip.ZipOutputStream;
  * @author yu 2018/06/11.
  */
 public class DocUtil {
+
+	/**
+	 * Seed used by reproducible generation.
+	 */
+	private static final long REPRODUCIBLE_SEED = 20240101L;
 
 	/**
 	 * private constructor
@@ -302,11 +306,63 @@ public class DocUtil {
 	private static final ThreadLocal<Boolean> RANDOM_MOCK = new ThreadLocal<>();
 
 	/**
-	 * Sets the random mock flag of the current generation run.
+	 * Reproducible flag of the current generation run.
+	 */
+	private static final ThreadLocal<Boolean> REPRODUCIBLE = new ThreadLocal<>();
+
+	/**
+	 * Fixed mock time of the current generation run.
+	 */
+	private static final ThreadLocal<Long> MOCK_TIME = new ThreadLocal<>();
+
+	/**
+	 * Sets the random mock flag of the current generation run. Random values are always
+	 * disabled in a reproducible run.
 	 * @param randomMock whether random examples are generated
 	 */
 	public static void setRandomMock(boolean randomMock) {
-		RANDOM_MOCK.set(randomMock);
+		RANDOM_MOCK.set(randomMock && !isReproducible());
+	}
+
+	/**
+	 * Sets the reproducible mode of the current generation run. Reproducible runs derive
+	 * mock time values from a fixed timestamp.
+	 * @param reproducible whether output must be reproducible
+	 */
+	public static void setReproducible(boolean reproducible) {
+		REPRODUCIBLE.set(reproducible);
+		if (reproducible) {
+			MOCK_TIME.set(RunClock.REPRODUCIBLE_TIMESTAMP);
+			RANDOM_MOCK.set(false);
+		}
+		else {
+			MOCK_TIME.remove();
+		}
+	}
+
+	/**
+	 * Returns whether the current generation run is reproducible.
+	 * @return true when output must be reproducible
+	 */
+	public static boolean isReproducible() {
+		return Boolean.TRUE.equals(REPRODUCIBLE.get());
+	}
+
+	/**
+	 * Returns the mock time of the current generation run.
+	 * @return timestamp in milliseconds
+	 */
+	private static long mockTime() {
+		Long mockTime = MOCK_TIME.get();
+		return mockTime != null ? mockTime : System.currentTimeMillis();
+	}
+
+	/**
+	 * Returns the mock date time of the current generation run in the system zone.
+	 * @return mock date time
+	 */
+	private static ZonedDateTime mockDateTime() {
+		return Instant.ofEpochMilli(mockTime()).atZone(ZoneId.systemDefault());
 	}
 
 	/**
@@ -320,6 +376,17 @@ public class DocUtil {
 			return randomMock;
 		}
 		return Boolean.parseBoolean(System.getProperty(DocGlobalConstants.RANDOM_MOCK));
+	}
+
+	/**
+	 * Returns a mock value for a primitive type. Reproducible runs use a deterministic
+	 * default value instead of a random one.
+	 * @param typeName primitive type name
+	 * @return mock value
+	 */
+	public static String mockPrimitiveValue(String typeName) {
+		return isReproducible() ? RandomUtil.generateDefaultValueByType(typeName)
+				: RandomUtil.randomValueByType(typeName);
 	}
 
 	/**
@@ -576,6 +643,9 @@ public class DocUtil {
 				int length = pathParam.length();
 				String reg = pathParam.substring(pathParam.indexOf(":") + 1, length - 1);
 				Generex generex = new Generex(reg);
+				if (isReproducible()) {
+					generex.setSeed(REPRODUCIBLE_SEED ^ reg.hashCode());
+				}
 				// Generate random String
 				String randomStr = generex.random();
 				String key = pathParam.substring(1, pathParam.indexOf(":"));
@@ -885,7 +955,7 @@ public class DocUtil {
 	}
 
 	public static Map<String, String> formDataToMap(List<FormData> formDataList) {
-		Map<String, String> formDataMap = new IdentityHashMap<>();
+		Map<String, String> formDataMap = isReproducible() ? new LinkedHashMap<>() : new IdentityHashMap<>();
 		for (FormData formData : formDataList) {
 			if ("file".equals(formData.getType())) {
 				continue;
@@ -1562,7 +1632,7 @@ public class DocUtil {
 		// If the field type is java.time.ZoneOffset, directly return the current time
 		// zone offset string.
 		if (javaClass.isA("java.time.ZoneOffset")) {
-			return handleJsonStr(String.valueOf(OffsetDateTime.now().getOffset()));
+			return handleJsonStr(String.valueOf(mockDateTime().getOffset()));
 		}
 
 		// Get the pattern, shape, timezone, and locale properties from the JSON format
@@ -1706,9 +1776,16 @@ public class DocUtil {
 	 * @return A random number formatted based on the pattern and shape.
 	 */
 	private static String generateRandomNumber(JavaClass javaClass, String patternValue, AnnotationValue shape) {
-		// generate random number
-		String randomNumber = isIntegerType(javaClass) ? String.valueOf(RandomUtil.randomInt())
-				: new DecimalFormat(patternValue).format(RandomUtil.randomDouble());
+		String randomNumber;
+		if (isReproducible()) {
+			Random random = new Random(REPRODUCIBLE_SEED ^ Objects.hash(javaClass.getCanonicalName(), patternValue));
+			randomNumber = isIntegerType(javaClass) ? String.valueOf(random.nextInt(100))
+					: new DecimalFormat(patternValue).format(random.nextDouble());
+		}
+		else {
+			randomNumber = isIntegerType(javaClass) ? String.valueOf(RandomUtil.randomInt())
+					: new DecimalFormat(patternValue).format(RandomUtil.randomDouble());
+		}
 
 		if (Objects.nonNull(shape) && shape instanceof FieldRef
 				&& Objects.equals(DocAnnotationConstants.JSON_FORMAT_SHAPE_STRING, ((FieldRef) shape).getName())) {
@@ -1749,7 +1826,9 @@ public class DocUtil {
 				return javaClass.getEnumConstants().stream().findFirst().map(JavaMember::getName).orElse(null);
 			}
 
-			return Instant.now().atZone(zoneId).format(DateTimeFormatter.ofPattern(patternValue, formatLocale));
+			return Instant.ofEpochMilli(mockTime())
+				.atZone(zoneId)
+				.format(DateTimeFormatter.ofPattern(patternValue, formatLocale));
 		}
 		catch (Exception e) {
 			return null;
@@ -1764,50 +1843,50 @@ public class DocUtil {
 	private static String generateTimeToNumberValue(JavaClass javaClass) {
 		if (javaClass.isA(JavaTypeConstants.JAVA_UTIL_CALENDAR_FULLY)
 				|| javaClass.isA(JavaTypeConstants.JAVA_UTIL_DATE_FULLY)) {
-			return String.valueOf(System.currentTimeMillis());
+			return String.valueOf(mockTime());
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_YEAR_FULLY)) {
-			return Year.now().toString();
+			return String.valueOf(mockDateTime().getYear());
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_DAY_OF_WEEK_FULLY)) {
-			return String.valueOf(LocalDate.now().getDayOfWeek().getValue());
+			return String.valueOf(mockDateTime().getDayOfWeek().getValue());
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_LOCAL_DATE_TIME_FULLY)) {
-			LocalDateTime now = LocalDateTime.now();
+			ZonedDateTime now = mockDateTime();
 			return "[" + now.getYear() + "," + now.getMonthValue() + "," + now.getDayOfMonth() + "," + now.getHour()
 					+ "," + now.getMinute() + "," + now.getSecond() + "," + now.getNano() + "]";
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_LOCAL_DATE_FULLY)) {
-			LocalDate now = LocalDate.now();
+			ZonedDateTime now = mockDateTime();
 			return "[" + now.getYear() + "," + now.getMonthValue() + "," + now.getDayOfMonth() + "]";
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_LOCAL_TIME_FULLY)) {
-			LocalTime now = LocalTime.now();
+			ZonedDateTime now = mockDateTime();
 			return "[" + now.getHour() + "," + now.getMinute() + "," + now.getSecond() + "," + now.getNano() + "]";
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_ZONED_DATE_TIME_FULLY)
 				|| javaClass.isA(JavaTypeConstants.JAVA_TIME_OFFSET_DATE_TIME_FULLY)
 				|| javaClass.isA(JavaTypeConstants.JAVA_TIME_INSTANT_FULLY)) {
-			Instant now = Instant.now();
+			Instant now = Instant.ofEpochMilli(mockTime());
 			long seconds = now.getEpochSecond();
 			int nanos = now.getNano();
 			return seconds + "." + nanos;
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_YEAR_MONTH_FULLY)) {
-			YearMonth now = YearMonth.now();
+			YearMonth now = YearMonth.from(mockDateTime());
 			return "[" + now.getYear() + "," + now.getMonthValue() + "]";
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_MONTH_DAY_FULLY)) {
-			MonthDay now = MonthDay.now();
+			MonthDay now = MonthDay.from(mockDateTime());
 			return "[" + now.getMonthValue() + "," + now.getDayOfMonth() + "]";
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_OFFSET_TIME_FULLY)) {
-			LocalTime now = LocalTime.now();
+			ZonedDateTime now = mockDateTime();
 			return "[" + now.getHour() + "," + now.getMinute() + "," + now.getSecond() + "," + now.getNano() + ","
-					+ "\"" + ZoneId.systemDefault().getRules().getOffset(Instant.now()) + "\"" + "]";
+					+ "\"" + now.getOffset() + "\"" + "]";
 		}
 		if (javaClass.isA(JavaTypeConstants.JAVA_TIME_MONTH_FULLY)) {
-			return String.valueOf(LocalDate.now().getMonth().getValue());
+			return String.valueOf(mockDateTime().getMonth().getValue());
 		}
 		return null;
 	}
@@ -1915,7 +1994,11 @@ public class DocUtil {
 			while ((entry = zipInputStream.getNextEntry()) != null) {
 				String entryName = entry.getName();
 				// copy fix the bug: invalid entry compressed size
-				zipOutputStream.putNextEntry(new ZipEntry(entryName));
+				ZipEntry newEntry = new ZipEntry(entryName);
+				if (isReproducible()) {
+					newEntry.setTime(RunClock.REPRODUCIBLE_TIMESTAMP);
+				}
+				zipOutputStream.putNextEntry(newEntry);
 				if ("word/document.xml".equals(entryName)) {
 					byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
 					zipOutputStream.write(bytes, 0, bytes.length);
