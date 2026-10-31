@@ -20,11 +20,12 @@
  */
 package io.github.smartdoc.model.postman;
 
-import java.util.UUID;
-
+import io.github.smartdoc.generation.RunClock;
 import com.power.common.util.DateTimeUtil;
-
 import org.apache.commons.lang3.StringUtils;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 /**
  * @author xingzi
@@ -33,19 +34,34 @@ public class InfoBean {
 
 	String schema;
 
-	private String _postman_id = UUID.randomUUID().toString();
+	private String _postman_id;
 
 	private String name;
 
 	public InfoBean(String name) {
+		this(name, false);
+	}
+
+	/**
+	 * Creates a postman info bean.
+	 * @param name collection name
+	 * @param reproducible whether the collection id and default name must be reproducible
+	 */
+	public InfoBean(String name, boolean reproducible) {
 		if (StringUtils.isBlank(name)) {
-			this.name = "smart-doc    "
-					+ DateTimeUtil.long2Str(System.currentTimeMillis(), DateTimeUtil.DATE_FORMAT_SECOND);
+			this.name = "smart-doc    " + DateTimeUtil.long2Str(RunClock.now(), DateTimeUtil.DATE_FORMAT_SECOND);
 		}
 		else {
 			this.name = name;
 		}
 		this.schema = "https://schema.getpostman.com/json/collection/v2.1.0/collection.json";
+		if (reproducible) {
+			this._postman_id = UUID.nameUUIDFromBytes((this.name + this.schema).getBytes(StandardCharsets.UTF_8))
+				.toString();
+		}
+		else {
+			this._postman_id = UUID.randomUUID().toString();
+		}
 	}
 
 }

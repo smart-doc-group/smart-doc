@@ -71,7 +71,6 @@ import io.github.smartdoc.utils.JsonUtil;
 import io.github.smartdoc.utils.RequestExampleUtil;
 import io.github.smartdoc.utils.TornaUtil;
 import com.power.common.util.CollectionUtil;
-import com.power.common.util.RandomUtil;
 import com.power.common.util.StringUtil;
 import com.thoughtworks.qdox.model.DocletTag;
 import com.thoughtworks.qdox.model.JavaAnnotation;
@@ -712,7 +711,7 @@ public class JAXRSDocBuildTemplate implements IDocBuildTemplate<ApiDoc>, IWebSoc
 						}
 						formData.setDescription(comment);
 						formData.setType(ParamTypeConstants.PARAM_TYPE_TEXT);
-						formData.setValue(RandomUtil.randomValueByType(gicName));
+						formData.setValue(DocUtil.mockPrimitiveValue(gicName));
 						formDataList.add(formData);
 					}
 					else if (javaClass.isEnum()) {

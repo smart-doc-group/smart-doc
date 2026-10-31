@@ -31,6 +31,11 @@ package io.github.smartdoc.generation;
  */
 public final class RunClock {
 
+	/**
+	 * Fixed timestamp used by reproducible generation (2024-01-01T00:00:00Z).
+	 */
+	public static final long REPRODUCIBLE_TIMESTAMP = 1704067200000L;
+
 	private static final ThreadLocal<State> STATE = new ThreadLocal<>();
 
 	private RunClock() {
@@ -66,9 +71,17 @@ public final class RunClock {
 	 * point calls this so that repeated builds in the same JVM get a fresh timestamp.
 	 */
 	public static void beginLegacyRunIfNeeded() {
+		beginLegacyRunIfNeeded(System.currentTimeMillis());
+	}
+
+	/**
+	 * Starts a legacy single-format run with the given time if no explicit run is active.
+	 * @param now timestamp in milliseconds
+	 */
+	public static void beginLegacyRunIfNeeded(long now) {
 		State state = STATE.get();
 		if (state == null || !state.explicit) {
-			STATE.set(new State(System.currentTimeMillis(), false));
+			STATE.set(new State(now, false));
 		}
 	}
 

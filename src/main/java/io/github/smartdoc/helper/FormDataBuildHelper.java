@@ -29,7 +29,6 @@ import io.github.smartdoc.model.CustomField;
 import io.github.smartdoc.model.DocJavaField;
 import io.github.smartdoc.model.FormData;
 import com.power.common.util.CollectionUtil;
-import com.power.common.util.RandomUtil;
 import com.power.common.util.StringUtil;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -87,7 +86,7 @@ public class FormDataBuildHelper extends BaseHelper {
 			FormData formData = new FormData();
 			formData.setKey(pre);
 			formData.setType(ParamTypeConstants.PARAM_TYPE_TEXT);
-			formData.setValue(StringUtil.removeQuotes(RandomUtil.randomValueByType(className)));
+			formData.setValue(StringUtil.removeQuotes(DocUtil.mockPrimitiveValue(className)));
 			formDataList.add(formData);
 			return formDataList;
 		}

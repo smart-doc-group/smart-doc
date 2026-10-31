@@ -409,6 +409,13 @@ public class ApiConfig {
 	private boolean randomMock;
 
 	/**
+	 * Generate reproducible output. Mock time values, file name timestamps and postman
+	 * ids are derived from a fixed time instead of the current time, and random mock
+	 * values are disabled.
+	 */
+	private boolean reproducible;
+
+	/**
 	 * build random component for openApi
 	 *
 	 * @see ComponentTypeEnum
@@ -1152,6 +1159,14 @@ public class ApiConfig {
 
 	public void setRandomMock(boolean randomMock) {
 		this.randomMock = randomMock;
+	}
+
+	public boolean isReproducible() {
+		return reproducible;
+	}
+
+	public void setReproducible(boolean reproducible) {
+		this.reproducible = reproducible;
 	}
 
 	public List<SourceCodePath> getJarSourcePaths() {

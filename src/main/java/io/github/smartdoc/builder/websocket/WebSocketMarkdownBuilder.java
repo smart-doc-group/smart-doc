@@ -21,6 +21,7 @@
 package io.github.smartdoc.builder.websocket;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
+import io.github.smartdoc.generation.RunClock;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.WebSocketDoc;
@@ -68,8 +69,8 @@ public class WebSocketMarkdownBuilder {
 		}
 
 		if (config.isAllInOne()) {
-			String version = config.isCoverOld() ? "" : "-V" + DateTimeUtil.long2Str(System.currentTimeMillis(),
-					DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
+			String version = config.isCoverOld() ? ""
+					: "-V" + DateTimeUtil.long2Str(RunClock.now(), DocGlobalConstants.DATE_FORMAT_YYYY_MM_DD_HH_MM);
 			String docName = webSocketDocBuilderTemplate.allInOneDocName(config, "webSocket-all" + version,
 					DocGlobalConstants.MARKDOWN_EXTENSION);
 			webSocketDocBuilderTemplate.buildWebSocketAllInOne(webSocketDocList, config, javaProjectBuilder,

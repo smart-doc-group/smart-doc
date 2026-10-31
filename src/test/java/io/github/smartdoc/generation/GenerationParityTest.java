@@ -76,6 +76,29 @@ public class GenerationParityTest {
 	}
 
 	@Test
+	public void reproducibleOutputIsStable(@TempDir Path tempDir) throws Exception {
+		List<RenderFormat> formats = Arrays.asList(RenderFormat.MARKDOWN, RenderFormat.ADOC, RenderFormat.HTML,
+				RenderFormat.WORD, RenderFormat.JMETER, RenderFormat.OPENAPI, RenderFormat.POSTMAN);
+		Path first = tempDir.resolve("first");
+		Path second = tempDir.resolve("second");
+
+		generateReproducible(first, formats);
+		generateReproducible(second, formats);
+
+		assertSameOutput(first, second);
+	}
+
+	private void generateReproducible(Path outDir, List<RenderFormat> formats) {
+		ApiConfig config = newConfig(outDir);
+		config.setReproducible(true);
+		// random examples must be disabled by the reproducible mode
+		config.setRandomMock(true);
+		// exercise the generated file name suffix as well
+		config.setCoverOld(false);
+		new DocGenerator(config, newProjectBuilder()).generate(formats);
+	}
+
+	@Test
 	public void aggregateSharesParsesForIdenticalFlags(@TempDir Path tempDir) {
 		ApiConfig config = newConfig(tempDir.resolve("shared"));
 		DocGenerator generator = new DocGenerator(config, newProjectBuilder());

@@ -89,7 +89,17 @@ public class DocGenerator {
 	 * @param formats output formats
 	 */
 	public void generate(Collection<RenderFormat> formats) {
-		generate(formats, RunClock.isRunActive() ? RunClock.now() : System.currentTimeMillis());
+		long now;
+		if (RunClock.isRunActive()) {
+			now = RunClock.now();
+		}
+		else if (config.isReproducible()) {
+			now = RunClock.REPRODUCIBLE_TIMESTAMP;
+		}
+		else {
+			now = System.currentTimeMillis();
+		}
+		generate(formats, now);
 	}
 
 	/**

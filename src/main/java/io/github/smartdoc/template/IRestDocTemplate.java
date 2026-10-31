@@ -71,7 +71,6 @@ import io.github.smartdoc.utils.OpenApiSchemaUtil;
 import io.github.smartdoc.utils.RequestExampleUtil;
 import io.github.smartdoc.utils.TornaUtil;
 import com.power.common.util.CollectionUtil;
-import com.power.common.util.RandomUtil;
 import com.power.common.util.StringUtil;
 import com.power.common.util.UrlUtil;
 import com.power.common.util.ValidateUtil;
@@ -1582,7 +1581,7 @@ public interface IRestDocTemplate extends IBaseDocBuildTemplate {
 					value = String.valueOf(JavaClassUtil.getEnumValue(javaClass1, configBuilder, Boolean.FALSE));
 				}
 				else {
-					value = RandomUtil.randomValueByType(gicName);
+					value = DocUtil.mockPrimitiveValue(gicName);
 				}
 				FormData formData = new FormData();
 				formData.setKey(paramName);
