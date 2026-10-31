@@ -76,9 +76,8 @@ public class DependencyTree {
 	 * @return DependencyTree
 	 */
 	public static DependencyTree detect(String baseDir, boolean isIncrement) {
-		DependencyTree dependencyTree;
 		if (!isIncrement) {
-			dependencyTree = new DependencyTree();
+			DependencyTree dependencyTree = new DependencyTree();
 			dependencyTree.setIncrement(false);
 			return dependencyTree;
 		}
@@ -86,12 +85,17 @@ public class DependencyTree {
 		File configFile = new File(baseDir + File.separator + CONFIG_NAME);
 		// the config file no exists
 		boolean fileNoExists = !configFile.exists();
+		DependencyTree dependencyTree;
 		if (fileNoExists) {
 			dependencyTree = Support.create(configFile);
 		}
 		else {
 			dependencyTree = Support.load(configFile);
 		}
+		// `increment` is transient and is not persisted in the config file, so it must
+		// be restored from the caller's intent. Otherwise DependencyTree#write skips
+		// persisting the latest commit id and dependency tree.
+		dependencyTree.setIncrement(true);
 		return dependencyTree;
 	}
 

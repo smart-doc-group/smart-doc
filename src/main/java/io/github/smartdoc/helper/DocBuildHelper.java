@@ -34,7 +34,6 @@ import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaType;
 import org.eclipse.jgit.diff.DiffEntry;
 
-import java.io.File;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -149,8 +148,12 @@ public class DocBuildHelper {
 		}
 		List<ApiDependency> oldDependencyTree = new ArrayList<>(this.dependencyTree.getDependencyTree());
 
+		// On the first incremental build there is no commit id yet, so the changed
+		// files are not collected and the dependency tree is built from scratch.
+		Set<FileDiff> fileDiffList = Objects.isNull(this.fileDiffList) ? Collections.emptySet() : this.fileDiffList;
+
 		// remove the deleted or deprecated dependencies
-		List<String> deletedClazz = this.fileDiffList.stream()
+		List<String> deletedClazz = fileDiffList.stream()
 			// newQualifiedName equals /dev/null means the class is deleted
 			.filter(item -> DiffEntry.DEV_NULL.equals(item.getNewQualifiedName()))
 			.map(FileDiff::getOldQualifiedName)
@@ -160,7 +163,7 @@ public class DocBuildHelper {
 			.map(ApiDependency::getClazz)
 			.distinct()
 			.collect(Collectors.toList());
-		List<String> deprecatedClazz = this.fileDiffList.stream()
+		List<String> deprecatedClazz = fileDiffList.stream()
 			.filter(FileDiff::isEntryPoint)
 			.map(FileDiff::getNewQualifiedName)
 			.filter(item -> {
@@ -320,7 +323,9 @@ public class DocBuildHelper {
 			filePath = filePath.substring(0, lastIndex);
 		}
 
-		return filePath.replace(File.separator, ".");
+		// JGit always returns paths separated by '/', while File.separator is '\' on
+		// Windows. Normalize both so the result is always a dotted class name.
+		return filePath.replace('/', '.').replace('\\', '.');
 	}
 
 	/**
