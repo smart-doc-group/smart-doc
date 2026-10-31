@@ -24,6 +24,7 @@ package io.github.smartdoc.model;
 import io.github.smartdoc.constants.ComponentTypeEnum;
 import io.github.smartdoc.constants.DocLanguage;
 import io.github.smartdoc.constants.OpenApiTagNameTypeEnum;
+import io.github.smartdoc.constants.OperationIdStrategyEnum;
 import io.github.smartdoc.handler.ICustomJavaMethodHandler;
 import io.github.smartdoc.model.jmeter.JMeter;
 import io.github.smartdoc.model.rpc.RpcApiDependency;
@@ -440,6 +441,30 @@ public class ApiConfig {
 	 * @since 3.1.1
 	 */
 	private OpenApiTagNameTypeEnum openApiTagNameType = OpenApiTagNameTypeEnum.CLASS_NAME;
+
+	/**
+	 * Strategy for generating the operationId in OpenAPI and Swagger documents.
+	 * <p>
+	 * Supported strategies:
+	 * </p>
+	 * <ul>
+	 * <li>{@link OperationIdStrategyEnum#METHOD_NAME}: use the method name, with a
+	 * numeric suffix for duplicates</li>
+	 * <li>{@link OperationIdStrategyEnum#METHOD_ID}: use the generated method id (MD5
+	 * hash)</li>
+	 * <li>{@link OperationIdStrategyEnum#PATH_METHOD_HTTP}: use path segments, the method
+	 * name and the HTTP method type</li>
+	 * </ul>
+	 * <p>
+	 * When unset, the OpenAPI 3 builder keeps using
+	 * {@link OperationIdStrategyEnum#METHOD_NAME} and the Swagger builder keeps its
+	 * historical operation id format, preserving backwards compatibility.
+	 * </p>
+	 *
+	 * @see OperationIdStrategyEnum
+	 * @since 4.0.0
+	 */
+	private OperationIdStrategyEnum operationIdStrategy;
 
 	/**
 	 * whether to build the doc incrementally
@@ -1209,6 +1234,15 @@ public class ApiConfig {
 
 	public ApiConfig setOpenApiTagNameType(OpenApiTagNameTypeEnum openApiTagNameType) {
 		this.openApiTagNameType = openApiTagNameType;
+		return this;
+	}
+
+	public OperationIdStrategyEnum getOperationIdStrategy() {
+		return operationIdStrategy;
+	}
+
+	public ApiConfig setOperationIdStrategy(OperationIdStrategyEnum operationIdStrategy) {
+		this.operationIdStrategy = operationIdStrategy;
 		return this;
 	}
 
