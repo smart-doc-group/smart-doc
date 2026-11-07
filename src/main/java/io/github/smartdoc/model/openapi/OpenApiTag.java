@@ -44,9 +44,17 @@ public class OpenApiTag {
 	 */
 	private String description;
 
+	/**
+	 * Creates an empty tag.
+	 */
 	public OpenApiTag() {
 	}
 
+	/**
+	 * Creates a tag with the given name and description.
+	 * @param name tag name
+	 * @param description tag description
+	 */
 	public OpenApiTag(String name, String description) {
 		this.name = name;
 		this.description = description;
@@ -82,22 +90,43 @@ public class OpenApiTag {
 		}
 	}
 
+	/**
+	 * Returns the tag name.
+	 * @return tag name
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Sets the tag name.
+	 * @param name tag name
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	/**
+	 * Returns the tag description.
+	 * @return tag description
+	 */
 	public String getDescription() {
 		return description;
 	}
 
+	/**
+	 * Sets the tag description.
+	 * @param description tag description
+	 */
 	public void setDescription(String description) {
 		this.description = description;
 	}
 
+	/**
+	 * Compares this tag with another object.
+	 * @param o object to compare
+	 * @return true when name and description are equal
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -110,6 +139,10 @@ public class OpenApiTag {
 		return Objects.equals(getName(), that.getName()) && Objects.equals(getDescription(), that.getDescription());
 	}
 
+	/**
+	 * Returns the hash code of the tag.
+	 * @return hash code
+	 */
 	@Override
 	public int hashCode() {
 		return Objects.hash(getName(), getDescription());
