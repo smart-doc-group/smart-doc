@@ -39,12 +39,17 @@ class HtmlEscapeTest {
 
 	/**
 	 * Provides test cases for normal inputs.
+	 * <p>
+	 * Javadoc comments are HTML, so the function keeps the markup and the special
+	 * characters as they are; only paragraph tags are stripped and line breaks are
+	 * replaced by a break tag.
 	 * @return a stream of arguments for testing
 	 */
 	static Stream<Arguments> provideNormalTestCases() {
-		return Stream.of(Arguments.of("&", "&amp;"), Arguments.of("\"", "&quot;"), Arguments.of("<p>", ""),
-				Arguments.of("<p>ab</p>abc", "ab abc"), Arguments.of("</p>", ""),
-				Arguments.of("<p>Hello & \"World\"</p>", "Hello &amp; &quot;World&quot; "), Arguments.of("", ""),
+		return Stream.of(Arguments.of("<p>", ""), Arguments.of("<p>ab</p>abc", "ab abc"), Arguments.of("</p>", ""),
+				Arguments.of("&", "&"), Arguments.of("\"", "\""),
+				Arguments.of("<a href=\"x\">link</a>", "<a href=\"x\">link</a>"),
+				Arguments.of("<p>Hello & \"World\"</p>", "Hello & \"World\" "), Arguments.of("", ""),
 				Arguments.of(null, ""));
 	}
 
