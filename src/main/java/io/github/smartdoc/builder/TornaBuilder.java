@@ -21,7 +21,9 @@
 package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.TornaConstants;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
+import io.github.smartdoc.generation.GoalFamily;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
@@ -66,6 +68,8 @@ public class TornaBuilder {
 	 * Only for smart-doc Maven plugin and Gradle plugin.
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder JavaProjectBuilder
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public static void buildApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		config.setParamsDataToTree(true);
@@ -90,6 +94,8 @@ public class TornaBuilder {
 	 * Generate Torna API.
 	 * @param config ApiConfig
 	 * @return TornaApi
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public static TornaApi getTornaApi(ApiConfig config) {
 		JavaProjectBuilder javaProjectBuilder = JavaProjectBuilderHelper.create();
@@ -146,13 +152,15 @@ public class TornaBuilder {
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder JavaProjectBuilder
 	 * @return List of ApiDoc
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	private static List<ApiDoc> generateApiDocs(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
 		builderTemplate.checkAndInit(config, Boolean.FALSE);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = TemplateResolver.<ApiDoc>resolve(config, GoalFamily.REST)
+			.template();
 		ApiSchema<ApiDoc> apiSchema = docBuildTemplate.getApiData(configBuilder);
 		return docBuildTemplate.handleApiGroup(apiSchema.getApiDatas(), config);
 	}

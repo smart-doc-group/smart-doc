@@ -26,6 +26,7 @@ import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.Methods;
 import io.github.smartdoc.constants.OpenApiTagNameTypeEnum;
 import io.github.smartdoc.constants.ParamTypeConstants;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
 import io.github.smartdoc.generation.DocGenerator;
 import io.github.smartdoc.generation.RenderFormat;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
@@ -93,6 +94,8 @@ public class OpenApiBuilder extends AbstractOpenApiBuilder {
 	 * Only for smart-doc maven plugin and gradle plugin.
 	 * @param config Configuration of smart-doc
 	 * @param projectBuilder JavaDocBuilder of QDox
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public static void buildOpenApi(ApiConfig config, JavaProjectBuilder projectBuilder) {
 		new DocGenerator(config, projectBuilder).generate(Collections.singletonList(RenderFormat.OPENAPI));

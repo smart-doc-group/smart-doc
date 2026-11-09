@@ -24,16 +24,17 @@ package io.github.smartdoc.builder.javadoc;
 import io.github.smartdoc.builder.IBaseDocBuilderTemplate;
 import io.github.smartdoc.builder.ProjectDocConfigBuilder;
 import io.github.smartdoc.constants.DocGlobalConstants;
-import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.constants.TemplateVariable;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
+import io.github.smartdoc.generation.DocContext;
+import io.github.smartdoc.generation.GoalFamily;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDocDict;
 import io.github.smartdoc.model.ApiErrorCode;
 import io.github.smartdoc.model.ApiSchema;
 import io.github.smartdoc.model.javadoc.JavadocApiAllData;
 import io.github.smartdoc.model.javadoc.JavadocApiDoc;
-import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
 import io.github.smartdoc.utils.DocUtil;
 import com.power.common.util.CollectionUtil;
@@ -58,8 +59,12 @@ public class JavadocDocBuilderTemplate implements IBaseDocBuilderTemplate<Javado
 	private static final String DEPENDENCY_TITLE = "Add dependency";
 
 	@Override
+	public GoalFamily goalFamily() {
+		return GoalFamily.JAVADOC;
+	}
+
+	@Override
 	public void checkAndInit(ApiConfig config, boolean checkOutPath) {
-		config.setFramework(FrameworkEnum.JAVADOC.getFramework());
 		IBaseDocBuilderTemplate.super.checkAndInit(config, checkOutPath);
 		config.setOutPath(config.getOutPath() + DocGlobalConstants.FILE_SEPARATOR + DocGlobalConstants.JAVADOC_OUT_DIR);
 	}
@@ -167,24 +172,24 @@ public class JavadocDocBuilderTemplate implements IBaseDocBuilderTemplate<Javado
 		this.checkAndInitForGetApiData(config);
 		config.setMd5EncryptedHtmlName(true);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<JavadocApiDoc> docBuildTemplate = BuildTemplateFactory
-			.getDocBuildTemplate(config.getFramework(), config.getClassLoader());
-		ApiSchema<JavadocApiDoc> apiSchema = docBuildTemplate.getApiData(configBuilder);
+		DocContext<JavadocApiDoc> context = TemplateResolver.resolve(config, GoalFamily.JAVADOC);
+		ApiSchema<JavadocApiDoc> apiSchema = context.parse(configBuilder);
 		return apiSchema.getApiDatas();
 	}
 
 	/**
-	 * get all java doc api data
+	 * get all Javadoc api data
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder JavaProjectBuilder
 	 * @return ApiAllData
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link JavadocApiDoc}
 	 */
 	public List<JavadocApiDoc> getJavadocApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		config.setShowJavaType(true);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<JavadocApiDoc> docBuildTemplate = BuildTemplateFactory
-			.getDocBuildTemplate(config.getFramework(), config.getClassLoader());
-		return docBuildTemplate.getApiData(configBuilder).getApiDatas();
+		DocContext<JavadocApiDoc> context = TemplateResolver.resolve(config, GoalFamily.JAVADOC);
+		return context.parse(configBuilder).getApiDatas();
 	}
 
 }

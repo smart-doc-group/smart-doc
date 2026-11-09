@@ -29,6 +29,7 @@ import io.github.smartdoc.constants.ParamTypeConstants;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiParam;
 import io.github.smartdoc.model.ApiSchema;
+import io.github.smartdoc.model.IDoc;
 import io.github.smartdoc.model.SourceCodePath;
 import io.github.smartdoc.model.annotation.FrameworkAnnotations;
 import io.github.smartdoc.model.grpc.GrpcApiDoc;
@@ -95,6 +96,11 @@ public class GRpcDocBuildTemplate implements IDocBuildTemplate<GrpcApiDoc>, IJav
 	@Override
 	public boolean supportsFramework(String framework) {
 		return FrameworkEnum.GRPC.getFramework().equalsIgnoreCase(framework);
+	}
+
+	@Override
+	public Class<? extends IDoc> documentType() {
+		return GrpcApiDoc.class;
 	}
 
 	@Override

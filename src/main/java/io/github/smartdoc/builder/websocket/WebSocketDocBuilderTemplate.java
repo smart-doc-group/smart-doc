@@ -26,7 +26,9 @@ import io.github.smartdoc.builder.ProjectDocConfigBuilder;
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.HighlightStyle;
 import io.github.smartdoc.constants.TemplateVariable;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
+import io.github.smartdoc.generation.GoalFamily;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDocDict;
 import io.github.smartdoc.model.ApiErrorCode;
@@ -51,6 +53,11 @@ import java.util.Map;
  */
 public class WebSocketDocBuilderTemplate implements IBaseDocBuilderTemplate<WebSocketDoc> {
 
+	@Override
+	public GoalFamily goalFamily() {
+		return GoalFamily.WEBSOCKET;
+	}
+
 	/**
 	 * get all websocket api data.
 	 * @param isAsciidoc is Asciidoc
@@ -74,12 +81,15 @@ public class WebSocketDocBuilderTemplate implements IBaseDocBuilderTemplate<WebS
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder JavaProjectBuilder
 	 * @return ApiAllData
+	 * @throws UnsupportedGoalFrameworkException when the configured framework has no
+	 * WebSocket build template
 	 */
+	@SuppressWarnings("unchecked")
 	public List<WebSocketDoc> getWebSocketApiDoc(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		config.setShowJavaType(false);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IWebSocketDocBuildTemplate<WebSocketDoc> webSocketDocBuildTemplate = BuildTemplateFactory
-			.getWebSocketDocBuildTemplate(config.getFramework(), config.getClassLoader());
+		IWebSocketDocBuildTemplate<WebSocketDoc> webSocketDocBuildTemplate = (IWebSocketDocBuildTemplate<WebSocketDoc>) TemplateResolver
+			.resolveWebSocket(config);
 		return webSocketDocBuildTemplate.getWebSocketData(configBuilder);
 	}
 

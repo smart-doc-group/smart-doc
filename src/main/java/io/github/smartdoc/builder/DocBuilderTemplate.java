@@ -24,8 +24,9 @@ import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.HighlightStyle;
 import io.github.smartdoc.constants.TemplateVariable;
 import io.github.smartdoc.constants.TornaConstants;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.generation.GoalFamily;
 import io.github.smartdoc.generation.RunClock;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.model.*;
 import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
@@ -463,8 +464,8 @@ public class DocBuilderTemplate implements IBaseDocBuilderTemplate<ApiDoc> {
 		this.checkAndInitForGetApiData(config);
 		config.setMd5EncryptedHtmlName(true);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = TemplateResolver.<ApiDoc>resolve(config, GoalFamily.REST)
+			.template();
 		return docBuildTemplate.getApiData(configBuilder).getApiDatas();
 	}
 

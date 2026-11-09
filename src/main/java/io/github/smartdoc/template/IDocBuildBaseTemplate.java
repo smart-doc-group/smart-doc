@@ -28,6 +28,7 @@ import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
 import io.github.smartdoc.model.ApiGroup;
 import io.github.smartdoc.model.ApiMethodDoc;
+import io.github.smartdoc.model.IDoc;
 import io.github.smartdoc.model.annotation.FrameworkAnnotations;
 import io.github.smartdoc.model.dependency.FileDiff;
 import io.github.smartdoc.utils.DocPathUtil;
@@ -56,11 +57,28 @@ public interface IDocBuildBaseTemplate {
 	Logger LOGGER = Logger.getLogger(IDocBuildBaseTemplate.class.getName());
 
 	/**
-	 * support framework.
-	 * @param framework framework
-	 * @return boolean
+	 * Returns whether this template can build documents for the given framework.
+	 * <p>
+	 * The framework names are matched case-insensitively against
+	 * {@link io.github.smartdoc.constants.FrameworkEnum}.
+	 * @param framework configured framework name, may be {@code null}
+	 * @return {@code true} when this template handles the framework
 	 */
 	boolean supportsFramework(String framework);
+
+	/**
+	 * Declares the document type this template produces for its framework.
+	 * <p>
+	 * The value is compared with the type required by the goal family before any source
+	 * is scanned, which turns a wrong {@code framework}/{@code goal} pair into a clear
+	 * configuration error. Third-party templates that do not override this method inherit
+	 * {@link IDoc}, meaning "not declared": the check is skipped and a warning is logged
+	 * so that custom templates keep working.
+	 * @return produced document type, {@link IDoc} when not declared
+	 */
+	default Class<? extends IDoc> documentType() {
+		return IDoc.class;
+	}
 
 	/**
 	 * Removes duplicate qdox classes with the same fully qualified name.

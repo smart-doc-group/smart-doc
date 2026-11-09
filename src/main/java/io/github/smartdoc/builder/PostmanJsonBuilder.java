@@ -23,9 +23,11 @@ package io.github.smartdoc.builder;
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.MediaType;
 import io.github.smartdoc.constants.Methods;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
 import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.GoalFamily;
 import io.github.smartdoc.generation.RenderFormat;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
@@ -99,10 +101,12 @@ public class PostmanJsonBuilder {
 	 * @param schema parsed api schema
 	 * @param config Smart-doc ApiConfig
 	 * @param projectBuilder qdox project builder
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public static void render(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder projectBuilder) {
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = TemplateResolver.<ApiDoc>resolve(config, GoalFamily.REST)
+			.template();
 		List<ApiDoc> apiDocList = docBuildTemplate.handleApiGroup(schema.getApiDatas(), config);
 		writeCollection(apiDocList, config);
 	}

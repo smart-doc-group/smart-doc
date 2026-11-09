@@ -51,6 +51,11 @@ public class SolonDocBuildTemplate implements IDocBuildTemplate<ApiDoc>, IWebSoc
 	}
 
 	@Override
+	public Class<? extends IDoc> documentType() {
+		return ApiDoc.class;
+	}
+
+	@Override
 	public ApiSchema<ApiDoc> renderApi(ProjectDocConfigBuilder projectBuilder, Collection<JavaClass> candidateClasses) {
 		ApiConfig apiConfig = projectBuilder.getApiConfig();
 		List<ApiReqParam> configApiReqParams = Stream.of(apiConfig.getRequestHeaders(), apiConfig.getRequestParams())

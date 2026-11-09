@@ -23,8 +23,8 @@ package io.github.smartdoc.builder.rpc;
 
 import io.github.smartdoc.builder.IRpcDocBuilderTemplate;
 import io.github.smartdoc.constants.DocGlobalConstants;
-import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.constants.TornaConstants;
+import io.github.smartdoc.generation.GoalFamily;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiGroup;
 import io.github.smartdoc.model.RpcJavaMethod;
@@ -49,10 +49,12 @@ import java.util.stream.Collectors;
 public class RpcDocBuilderTemplate implements IRpcDocBuilderTemplate<RpcApiDoc> {
 
 	@Override
+	public GoalFamily goalFamily() {
+		return GoalFamily.RPC;
+	}
+
+	@Override
 	public void checkAndInit(ApiConfig config, boolean checkOutPath) {
-		if (StringUtil.isEmpty(config.getFramework())) {
-			config.setFramework(FrameworkEnum.DUBBO.getFramework());
-		}
 		IRpcDocBuilderTemplate.super.checkAndInit(config, checkOutPath);
 		config.setOutPath(config.getOutPath() + DocGlobalConstants.FILE_SEPARATOR + DocGlobalConstants.RPC_OUT_DIR);
 	}
