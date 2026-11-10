@@ -41,7 +41,15 @@ import io.github.smartdoc.model.ApiReqParam;
 import io.github.smartdoc.model.ApiSchema;
 import io.github.smartdoc.model.DocMapping;
 import io.github.smartdoc.model.TagDoc;
+import io.github.smartdoc.model.openapi.Example;
+import io.github.smartdoc.model.openapi.OpenApiMediaType;
 import io.github.smartdoc.model.openapi.OpenApiTag;
+import io.github.smartdoc.model.openapi.Response;
+import io.github.smartdoc.model.openapi.ResponseBody;
+import io.github.smartdoc.model.openapi.Operation;
+import io.github.smartdoc.model.openapi.Parameter;
+import io.github.smartdoc.model.openapi.PathItem;
+import io.github.smartdoc.model.openapi.Schema;
 import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.DocUtil;
 import io.github.smartdoc.utils.OpenApiSchemaUtil;
@@ -71,6 +79,12 @@ import static io.github.smartdoc.constants.DocGlobalConstants.OPENAPI_3_COMPONEN
  * @since 2.6.2
  */
 public abstract class AbstractOpenApiBuilder {
+
+	/**
+	 * Creates a builder.
+	 */
+	protected AbstractOpenApiBuilder() {
+	}
 
 	/**
 	 * Logger for the class.
@@ -119,7 +133,7 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiExceptionStatuses Exception status list
 	 * @return Map of request urls
 	 */
-	abstract Map<String, Object> buildPathUrlsRequest(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, ApiDoc apiDoc,
+	abstract Operation buildPathUrlsRequest(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, ApiDoc apiDoc,
 			List<ApiExceptionStatus> apiExceptionStatuses);
 
 	/**
@@ -128,14 +142,14 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiConfig ApiConfig
 	 * @return Map of response body
 	 */
-	abstract Map<String, Object> buildResponsesBody(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc);
+	abstract ResponseBody buildResponsesBody(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc);
 
 	/**
 	 * Build request parameters
 	 * @param apiMethodDoc API data for the method
 	 * @return List of parameters
 	 */
-	abstract List<Map<String, Object>> buildParameters(ApiMethodDoc apiMethodDoc);
+	abstract List<Parameter> buildParameters(ApiMethodDoc apiMethodDoc);
 
 	/**
 	 * Build request parameters
@@ -143,24 +157,12 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param hasItems has items
 	 * @return Map of request parameters
 	 */
-	abstract Map<String, Object> getStringParams(ApiParam apiParam, boolean hasItems);
-
-	/**
-	 * component schema
-	 * @param apiSchema API schema
-	 * @return component schema Map
-	 */
-	abstract public Map<String, Object> buildComponentsSchema(ApiSchema<ApiDoc> apiSchema);
+	abstract Parameter getStringParams(ApiParam apiParam, boolean hasItems);
 
 	/**
 	 * String component
 	 */
-	protected static final Map<String, String> STRING_COMPONENT = new HashMap<>();
-
-	static {
-		STRING_COMPONENT.put("type", "string");
-		STRING_COMPONENT.put("format", "string");
-	}
+	protected static final Schema STRING_COMPONENT = Schema.string();
 
 	/**
 	 * Build openapi paths
@@ -168,12 +170,11 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiSchema Project API schema
 	 * @param tags tags
 	 * @param isSwagger is swagger
-	 * @return Map of paths
+	 * @return path items keyed by path
 	 */
-	@SuppressWarnings("unchecked")
-	public Map<String, Object> buildPaths(ApiConfig apiConfig, ApiSchema<ApiDoc> apiSchema, Set<OpenApiTag> tags,
+	public Map<String, PathItem> buildPaths(ApiConfig apiConfig, ApiSchema<ApiDoc> apiSchema, Set<OpenApiTag> tags,
 			boolean isSwagger) {
-		Map<String, Object> pathMap = new LinkedHashMap<>(500);
+		Map<String, PathItem> pathMap = new LinkedHashMap<>(500);
 
 		List<ApiDoc> apiDocs = apiSchema.getApiDatas();
 		for (ApiDoc apiDoc : apiDocs) {
@@ -187,15 +188,9 @@ public abstract class AbstractOpenApiBuilder {
 					if (StringUtil.isNotEmpty(apiConfig.getPathPrefix()) && isSwagger) {
 						path = path.replace(apiConfig.getPathPrefix(), "");
 					}
-					Map<String, Object> request = this.buildPathUrls(apiConfig, methodDoc, methodDoc.getClazzDoc(),
+					Operation operation = this.buildPathUrlsRequest(apiConfig, methodDoc, methodDoc.getClazzDoc(),
 							apiSchema.getApiExceptionStatuses());
-					if (!pathMap.containsKey(path)) {
-						pathMap.put(path, request);
-					}
-					else {
-						Map<String, Object> oldRequest = (Map<String, Object>) pathMap.get(path);
-						oldRequest.putAll(request);
-					}
+					pathMap.computeIfAbsent(path, key -> new PathItem()).setOperation(methodDoc.getType(), operation);
 				}
 			}
 		}
@@ -211,37 +206,20 @@ public abstract class AbstractOpenApiBuilder {
 	}
 
 	/**
-	 * Build path urls
-	 * @param apiConfig ApiConfig
-	 * @param apiMethodDoc Method
-	 * @param apiDoc ApiDoc
-	 * @param apiExceptionStatuses Exception status list
-	 * @return Map of path urls
-	 */
-	public Map<String, Object> buildPathUrls(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, ApiDoc apiDoc,
-			List<ApiExceptionStatus> apiExceptionStatuses) {
-		Map<String, Object> request = new HashMap<>(16);
-		request.put(apiMethodDoc.getType().toLowerCase(),
-				this.buildPathUrlsRequest(apiConfig, apiMethodDoc, apiDoc, apiExceptionStatuses));
-		return request;
-	}
-
-	/**
 	 * Build content for responses and requestBody
 	 * @param apiConfig ApiConfig
 	 * @param apiMethodDoc ApiMethodDoc
 	 * @param isRep is response
-	 * @return Map of content
+	 * @return content keyed by media type
 	 */
-	public Map<String, Object> buildContent(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, boolean isRep) {
-		Map<String, Object> content = new HashMap<>(16);
+	public Map<String, OpenApiMediaType> buildContent(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, boolean isRep) {
+		Map<String, OpenApiMediaType> content = new HashMap<>(16);
 		String contentType = apiMethodDoc.getContentType();
 		if (isRep) {
 			contentType = "*/*";
 		}
 		content.put(contentType, this.buildContentBody(apiConfig, apiMethodDoc, isRep));
 		return content;
-
 	}
 
 	/**
@@ -249,51 +227,48 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiConfig ApiConfig
 	 * @param apiMethodDoc ApiMethodDoc
 	 * @param isRep is response
-	 * @return Map of content
+	 * @return media type of the content
 	 */
-	public Map<String, Object> buildContentBody(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, boolean isRep) {
-		Map<String, Object> content = new HashMap<>(16);
+	public OpenApiMediaType buildContentBody(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, boolean isRep) {
+		OpenApiMediaType mediaType = new OpenApiMediaType();
 		if (Objects.nonNull(apiMethodDoc.getReturnSchema()) && isRep) {
-			content.put("schema", apiMethodDoc.getReturnSchema());
+			mediaType.setSchema(apiMethodDoc.getReturnSchema());
 		}
 		else if (!isRep && Objects.nonNull(apiMethodDoc.getRequestSchema())) {
-			content.put("schema", apiMethodDoc.getRequestSchema());
+			mediaType.setSchema(apiMethodDoc.getRequestSchema());
 		}
 		else {
-			content.put("schema", this.buildBodySchema(apiMethodDoc, isRep));
+			mediaType.setSchema(this.buildBodySchema(apiMethodDoc, isRep));
 		}
 
 		if (OPENAPI_2_COMPONENT_KRY.equals(componentKey) && !isRep) {
-			content.put("name", apiMethodDoc.getName());
+			mediaType.setName(apiMethodDoc.getName());
 		}
 		if (OPENAPI_3_COMPONENT_KRY.equals(componentKey)
 				&& (!isRep && apiConfig.isRequestExample() || (isRep && apiConfig.isResponseExample()))) {
-			content.put("examples", buildBodyExample(apiMethodDoc, isRep));
+			mediaType.setExamples(buildBodyExample(apiMethodDoc, isRep));
 		}
-		return content;
-
+		return mediaType;
 	}
 
 	/**
 	 * Build schema of Body
 	 * @param apiMethodDoc ApiMethodDoc
 	 * @param isRep is response
-	 * @return Map of schema
+	 * @return schema of the body
 	 */
-	public Map<String, Object> buildBodySchema(ApiMethodDoc apiMethodDoc, boolean isRep) {
-		Map<String, Object> schema = new HashMap<>(10);
-		Map<String, Object> innerScheme = new HashMap<>(10);
+	public Schema buildBodySchema(ApiMethodDoc apiMethodDoc, boolean isRep) {
+		Schema schema = new Schema();
 		// For response
 		if (isRep) {
 			String responseRef = componentKey
 					+ OpenApiSchemaUtil.getClassNameFromParams(apiMethodDoc.getResponseParams());
 			if (apiMethodDoc.getIsResponseArray() == 1) {
-				schema.put("type", ParamTypeConstants.PARAM_TYPE_ARRAY);
-				innerScheme.put("$ref", responseRef);
-				schema.put("items", innerScheme);
+				schema.setType(ParamTypeConstants.PARAM_TYPE_ARRAY);
+				schema.setItems(new Schema().setRef(responseRef));
 			}
 			else if (CollectionUtil.isNotEmpty(apiMethodDoc.getResponseParams())) {
-				schema.put("$ref", responseRef);
+				schema.setRef(responseRef);
 			}
 			return schema;
 		}
@@ -304,11 +279,11 @@ public abstract class AbstractOpenApiBuilder {
 		if (Methods.POST.getValue().equals(apiMethodDoc.getType())
 				&& (apiMethodDoc.getContentType().equals(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 						|| apiMethodDoc.getContentType().equals(MediaType.MULTIPART_FORM_DATA_VALUE))) {
-			schema.put("type", ParamTypeConstants.PARAM_TYPE_OBJECT);
-			Map<String, Object> propertiesAndRequiredMap = this.buildProperties(apiMethodDoc.getRequestParams(),
-					new HashMap<>(), Boolean.FALSE);
-			schema.put("properties", propertiesAndRequiredMap.get("properties"));
-			schema.put("required", propertiesAndRequiredMap.get("required"));
+			schema.setType(ParamTypeConstants.PARAM_TYPE_OBJECT);
+			Schema requestSchema = this.buildProperties(apiMethodDoc.getRequestParams(), new HashMap<>(),
+					Boolean.FALSE);
+			schema.setProperties(requestSchema.getProperties());
+			schema.setRequired(requestSchema.getRequired());
 			return schema;
 		}
 		else if (apiMethodDoc.getContentType().equals(MediaType.APPLICATION_FORM_URLENCODED_VALUE)) {
@@ -320,12 +295,11 @@ public abstract class AbstractOpenApiBuilder {
 		// remove special characters in url
 		if (CollectionUtil.isNotEmpty(apiMethodDoc.getRequestParams())) {
 			if (apiMethodDoc.getIsRequestArray() == 1) {
-				schema.put("type", ParamTypeConstants.PARAM_TYPE_ARRAY);
-				innerScheme.put("$ref", requestRef);
-				schema.put("items", innerScheme);
+				schema.setType(ParamTypeConstants.PARAM_TYPE_ARRAY);
+				schema.setItems(new Schema().setRef(requestRef));
 			}
 			else {
-				schema.put("$ref", requestRef);
+				schema.setRef(requestRef);
 			}
 		}
 		return schema;
@@ -335,35 +309,31 @@ public abstract class AbstractOpenApiBuilder {
 	 * Build body example
 	 * @param apiMethodDoc ApiMethodDoc
 	 * @param isRep is response
-	 * @return Map of content
+	 * @return examples keyed by example name
 	 */
-	public static Map<String, Object> buildBodyExample(ApiMethodDoc apiMethodDoc, boolean isRep) {
-		Map<String, Object> content = new HashMap<>(8);
+	public static Map<String, Example> buildBodyExample(ApiMethodDoc apiMethodDoc, boolean isRep) {
+		Map<String, Example> content = new HashMap<>(8);
 		content.put("json", buildExampleData(apiMethodDoc, isRep));
 		return content;
-
 	}
 
 	/**
 	 * Build example data
 	 * @param apiMethodDoc ApiMethodDoc
 	 * @param isRep is response
-	 * @return Map of content
+	 * @return example of the request or response
 	 */
-	public static Map<String, Object> buildExampleData(ApiMethodDoc apiMethodDoc, boolean isRep) {
-		Map<String, Object> content = new HashMap<>(8);
-		content.put("summary", "test data");
+	public static Example buildExampleData(ApiMethodDoc apiMethodDoc, boolean isRep) {
+		Example example = new Example().setSummary("test data");
 		if (!isRep) {
-			content.put("value",
-					StringUtil.isEmpty(apiMethodDoc.getRequestExample().getJsonBody())
-							? apiMethodDoc.getRequestExample().getExampleBody()
-							: apiMethodDoc.getRequestExample().getJsonBody());
+			example.setValue(StringUtil.isEmpty(apiMethodDoc.getRequestExample().getJsonBody())
+					? apiMethodDoc.getRequestExample().getExampleBody()
+					: apiMethodDoc.getRequestExample().getJsonBody());
 		}
 		else {
-			content.put("value", apiMethodDoc.getResponseUsage());
+			example.setValue(apiMethodDoc.getResponseUsage());
 		}
-		return content;
-
+		return example;
 	}
 
 	/**
@@ -371,40 +341,37 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiParam Parameter information
 	 * @return parameters schema
 	 */
-	public Map<String, Object> buildParametersSchema(ApiParam apiParam) {
-		Map<String, Object> schema = new HashMap<>(10);
+	public Schema buildParametersSchema(ApiParam apiParam) {
+		Schema schema = new Schema();
 		String openApiType = DocUtil.javaTypeToOpenApiTypeConvert(apiParam.getType());
 		// The values of openApiType are "file", "object", "array","string",
 		// "integer","number"
-		schema.put("type", openApiType);
+		schema.setType(openApiType);
 		switch (openApiType) {
 			case ParamTypeConstants.PARAM_TYPE_FILE:
-				schema.put("format", "binary");
-				schema.put("type", "string");
+				schema.setFormat("binary");
+				schema.setType("string");
 				break;
 			case ParamTypeConstants.PARAM_TYPE_OBJECT:
 				if ("enum".equals(apiParam.getType())) {
-					schema.put("enum", apiParam.getEnumValues());
+					schema.setEnumValues(apiParam.getEnumValues());
 				}
 				break;
 			case ParamTypeConstants.PARAM_TYPE_ARRAY:
 				if (CollectionUtil.isNotEmpty(apiParam.getEnumValues())) {
-					schema.put("type", "string");
-					schema.put("items", apiParam.getEnumValues());
+					schema.setType("string");
+					schema.setItems(apiParam.getEnumValues());
 				}
 				else {
-					schema.put("type", ParamTypeConstants.PARAM_TYPE_ARRAY);
-					Map<String, String> map = new HashMap<>(4);
-					map.put("type", "string");
-					map.put("format", "string");
-					schema.put("items", map);
+					schema.setType(ParamTypeConstants.PARAM_TYPE_ARRAY);
+					schema.setItems(Schema.string());
 				}
 				break;
 			default:
 				// "string", "integer", "number"
-				schema.put("format", apiParam.getType());
+				schema.setFormat(apiParam.getType());
 				if ("enum".equals(apiParam.getType())) {
-					schema.put("enum", apiParam.getEnumValues());
+					schema.setEnumValues(apiParam.getEnumValues());
 				}
 				break;
 		}
@@ -416,11 +383,11 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param header header
 	 * @return parameters schema
 	 */
-	public static Map<String, Object> buildParametersSchema(ApiReqParam header) {
-		Map<String, Object> schema = new HashMap<>(10);
+	public static Schema buildParametersSchema(ApiReqParam header) {
+		Schema schema = new Schema();
 		String openApiType = DocUtil.javaTypeToOpenApiTypeConvert(header.getType());
-		schema.put("type", openApiType);
-		schema.put("format", openApiType);
+		schema.setType(openApiType);
+		schema.setFormat(openApiType);
 		return schema;
 	}
 
@@ -429,11 +396,11 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiMethodDoc ApiMethodDoc
 	 * @param apiConfig ApiConfig
 	 * @param apiExceptionStatuses apiExceptionStatuses
-	 * @return response info
+	 * @return responses keyed by http status code
 	 */
-	public Map<String, Object> buildResponses(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc,
+	public Map<String, ResponseBody> buildResponses(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc,
 			List<ApiExceptionStatus> apiExceptionStatuses) {
-		Map<String, Object> response = new LinkedHashMap<>(8);
+		Map<String, ResponseBody> response = new LinkedHashMap<>(8);
 		response.put("200", this.buildResponsesBody(apiConfig, apiMethodDoc));
 		if (CollectionUtil.isNotEmpty(apiExceptionStatuses)) {
 			for (ApiExceptionStatus apiExceptionStatus : apiExceptionStatuses) {
@@ -448,31 +415,26 @@ public abstract class AbstractOpenApiBuilder {
 	 * Build exception response body
 	 * @param apiConfig ApiConfig
 	 * @param apiExceptionStatus ApiExceptionStatus
-	 * @return Map of content
+	 * @return response body of the exception
 	 */
-	public Map<String, Object> buildExceptionResponsesBody(ApiConfig apiConfig, ApiExceptionStatus apiExceptionStatus) {
-		Map<String, Object> responseBody = new HashMap<>(8);
-		responseBody.put("description", apiExceptionStatus.getDesc());
-		Map<String, Object> content = new HashMap<>(8);
-		Map<String, Object> mediaTypeContent = new HashMap<>(8);
-		Map<String, Object> schema = new HashMap<>(8);
+	public Response buildExceptionResponsesBody(ApiConfig apiConfig, ApiExceptionStatus apiExceptionStatus) {
+		Response response = new Response().setDescription(apiExceptionStatus.getDesc());
+		OpenApiMediaType mediaType = new OpenApiMediaType();
 		String responseRef = componentKey
 				+ OpenApiSchemaUtil.getClassNameFromParams(apiExceptionStatus.getExceptionResponseParams());
 		if (CollectionUtil.isNotEmpty(apiExceptionStatus.getExceptionResponseParams())) {
-			schema.put("$ref", responseRef);
+			mediaType.setSchema(new Schema().setRef(responseRef));
 		}
-		mediaTypeContent.put("schema", schema);
 		if (OPENAPI_3_COMPONENT_KRY.equals(componentKey) && apiConfig.isResponseExample()) {
-			Map<String, Object> json = new HashMap<>(8);
-			Map<String, Object> jsonData = new HashMap<>(8);
-			jsonData.put("summary", "response example");
-			jsonData.put("value", apiExceptionStatus.getResponseUsage());
-			json.put("json", jsonData);
-			mediaTypeContent.put("examples", json);
+			Map<String, Example> examples = new HashMap<>(8);
+			examples.put("json",
+					new Example().setSummary("response example").setValue(apiExceptionStatus.getResponseUsage()));
+			mediaType.setExamples(examples);
 		}
-		content.put("*/*", mediaTypeContent);
-		responseBody.put("content", content);
-		return responseBody;
+		Map<String, OpenApiMediaType> content = new HashMap<>(8);
+		content.put("*/*", mediaType);
+		response.setContent(content);
+		return response;
 	}
 
 	/**
@@ -480,11 +442,11 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param apiParam list of ApiParam
 	 * @param component component
 	 * @param isResp is response
-	 * @return properties
+	 * @return object schema holding the properties
 	 */
-	public Map<String, Object> buildProperties(List<ApiParam> apiParam, Map<String, Object> component, boolean isResp) {
-		Map<String, Object> properties = new HashMap<>();
-		Map<String, Object> propertiesData = new LinkedHashMap<>();
+	public Schema buildProperties(List<ApiParam> apiParam, Map<String, Schema> component, boolean isResp) {
+		Schema schema = new Schema();
+		Map<String, Schema> propertiesData = new LinkedHashMap<>();
 		List<String> requiredList = new ArrayList<>();
 		if (apiParam != null) {
 			int paramsSize = apiParam.size();
@@ -503,97 +465,89 @@ public abstract class AbstractOpenApiBuilder {
 				propertiesData.put(field, this.buildPropertiesData(param, component, isResp));
 			}
 			if (!propertiesData.isEmpty()) {
-				properties.put("type", "object");
-				properties.put("properties", propertiesData);
+				schema.setType("object");
+				schema.setProperties(propertiesData);
 			}
 			if (!CollectionUtil.isEmpty(requiredList)) {
-				properties.put("required", requiredList);
+				schema.setRequired(requiredList);
 			}
-			return properties;
 		}
-		else {
-			return new HashMap<>();
-		}
-
+		return schema;
 	}
 
 	/**
-	 * component schema properties
-	 * @param apiParam list of ApiParam
-	 * @param component component
-	 * @param isResp is response
-	 * @return properties
+	 * Build the schema of one property.
+	 * @param apiParam ApiParam of the property
+	 * @param component component schemas collected so far
+	 * @param isResp whether the property belongs to a response
+	 * @return schema of the property
 	 */
-	private Map<String, Object> buildPropertiesData(ApiParam apiParam, Map<String, Object> component, boolean isResp) {
-		Map<String, Object> propertiesData = new HashMap<>(16);
+	private Schema buildPropertiesData(ApiParam apiParam, Map<String, Schema> component, boolean isResp) {
+		Schema schema = new Schema();
 		String openApiType = DocUtil.javaTypeToOpenApiTypeConvert(apiParam.getType());
 		// array object file map
-		propertiesData.put("description", apiParam.getDesc());
+		schema.setDescription(apiParam.getDesc());
 		if (StringUtil.isNotEmpty(apiParam.getValue())) {
-			propertiesData.put("example", this.getExampleValueBasedOnTypeForApiParam(apiParam));
+			schema.setExample(this.getExampleValueBasedOnTypeForApiParam(apiParam));
 		}
 
 		if (!"object".equals(openApiType)) {
-			propertiesData.put("type", openApiType);
-			propertiesData.put("format", "int16".equals(apiParam.getType()) ? "int32" : apiParam.getType());
+			schema.setType(openApiType);
+			schema.setFormat("int16".equals(apiParam.getType()) ? "int32" : apiParam.getType());
 			if ("enum".equals(apiParam.getType())) {
-				propertiesData.put("enum", apiParam.getEnumValues());
+				schema.setEnumValues(apiParam.getEnumValues());
 			}
 		}
 		if ("map".equals(apiParam.getType())) {
-			propertiesData.put("type", "object");
-			propertiesData.put("description", apiParam.getDesc() + "(map data)");
+			schema.setType("object");
+			schema.setDescription(apiParam.getDesc() + "(map data)");
 		}
 		if ("array".equals(apiParam.getType())) {
-			propertiesData.put("type", "array");
+			schema.setType("array");
 			if (CollectionUtil.isNotEmpty(apiParam.getChildren())) {
 				if (!apiParam.isSelfReferenceLoop()) {
-					Map<String, Object> arrayRef = new HashMap<>(4);
 					String childSchemaName = OpenApiSchemaUtil.getClassNameFromParams(apiParam.getChildren());
 					if (childSchemaName.contains(OpenApiSchemaUtil.NO_BODY_PARAM)) {
-						propertiesData.put("type", "object");
-						propertiesData.put("description", apiParam.getDesc() + "(object)");
+						schema.setType("object");
+						schema.setDescription(apiParam.getDesc() + "(object)");
 					}
 					else {
 						component.put(childSchemaName, this.buildProperties(apiParam.getChildren(), component, isResp));
-						arrayRef.put("$ref", componentKey + childSchemaName);
-						propertiesData.put("items", arrayRef);
+						schema.setItems(new Schema().setRef(componentKey + childSchemaName));
 					}
 				}
 			}
 			else {
-				Map<String, Object> arrayRef = new HashMap<>(4);
-				arrayRef.put("type", "string");
-				propertiesData.put("items", arrayRef);
+				schema.setItems(new Schema().setType("string"));
 			}
 		}
 		if ("file".equals(apiParam.getType())) {
-			propertiesData.put("type", "string");
-			propertiesData.put("format", "binary");
+			schema.setType("string");
+			schema.setFormat("binary");
 		}
 		if ("object".equals(apiParam.getType())) {
-			propertiesData.put("description", apiParam.getDesc() + "(object)");
+			schema.setDescription(apiParam.getDesc() + "(object)");
 			if (CollectionUtil.isNotEmpty(apiParam.getChildren())) {
 				if (!apiParam.isSelfReferenceLoop()) {
 					String childSchemaName = OpenApiSchemaUtil.getClassNameFromParams(apiParam.getChildren());
 					if (childSchemaName.contains(OpenApiSchemaUtil.NO_BODY_PARAM)) {
-						propertiesData.put("type", "object");
+						schema.setType("object");
 					}
 					else {
 						component.put(childSchemaName, this.buildProperties(apiParam.getChildren(), component, isResp));
-						propertiesData.put("$ref", componentKey + childSchemaName);
+						schema.setRef(componentKey + childSchemaName);
 					}
 				}
 			}
 			else {
-				propertiesData.put("type", "object");
+				schema.setType("object");
 			}
 		}
 		if (apiParam.getExtensions() != null && !apiParam.getExtensions().isEmpty()) {
-			apiParam.getExtensions().forEach((key, value) -> propertiesData.put("x-" + key, value));
+			apiParam.getExtensions().forEach(schema::addExtension);
 		}
 
-		return propertiesData;
+		return schema;
 	}
 
 	/**
@@ -601,10 +555,10 @@ public abstract class AbstractOpenApiBuilder {
 	 * documentation entries to extract request and response parameter information, and
 	 * organizes them into OpenAPI component schemas.
 	 * @param apiSchema The API documentation schema.
-	 * @return Returns a map containing all component schemas.
+	 * @return component schemas keyed by schema name
 	 */
-	public Map<String, Object> buildComponentData(ApiSchema<ApiDoc> apiSchema) {
-		Map<String, Object> component = new HashMap<>(16);
+	public Map<String, Schema> buildComponentData(ApiSchema<ApiDoc> apiSchema) {
+		Map<String, Schema> component = new HashMap<>(16);
 		component.put(DocGlobalConstants.DEFAULT_PRIMITIVE, STRING_COMPONENT);
 		apiSchema.getApiDatas().forEach(entrypoint -> {
 			List<ApiMethodDoc> apiMethodDocs = entrypoint.getList();
@@ -612,7 +566,7 @@ public abstract class AbstractOpenApiBuilder {
 				// request components
 				String requestSchema = OpenApiSchemaUtil.getClassNameFromParams(method.getRequestParams());
 				List<ApiParam> requestParams = method.getRequestParams();
-				Map<String, Object> prop = this.buildProperties(requestParams, component, false);
+				Schema prop = this.buildProperties(requestParams, component, false);
 				component.put(requestSchema, prop);
 				// response components
 				List<ApiParam> responseParams = method.getResponseParams();

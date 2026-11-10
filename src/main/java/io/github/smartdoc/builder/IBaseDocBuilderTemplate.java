@@ -54,6 +54,7 @@ import java.util.logging.Logger;
 /**
  * doc builder template interface.
  *
+ * @param <T> type of the api doc
  * @author yu 2020/5/16.
  */
 public interface IBaseDocBuilderTemplate<T extends IDoc> {

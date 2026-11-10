@@ -36,7 +36,13 @@ import io.github.smartdoc.model.ApiMethodDoc;
 import io.github.smartdoc.model.ApiParam;
 import io.github.smartdoc.model.ApiReqParam;
 import io.github.smartdoc.model.ApiSchema;
+import io.github.smartdoc.model.openapi.OpenApiMediaType;
+import io.github.smartdoc.model.openapi.Operation;
+import io.github.smartdoc.model.openapi.Parameter;
+import io.github.smartdoc.model.openapi.Info;
 import io.github.smartdoc.model.openapi.OpenApiTag;
+import io.github.smartdoc.model.openapi.Swagger;
+import io.github.smartdoc.model.openapi.SwaggerResponse;
 import io.github.smartdoc.utils.DocUtil;
 import io.github.smartdoc.utils.JsonUtil;
 import com.power.common.util.CollectionUtil;
@@ -53,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -119,16 +126,14 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	public void openApiCreate(ApiConfig config, ApiSchema<ApiDoc> apiSchema) {
 		OPERATIONID_ORDER_NO_MAP.clear();
 		this.setComponentKey(getModuleName());
-		Map<String, Object> json = new HashMap<>(8);
-		json.put("swagger", "2.0");
-		json.put("info", buildInfo(config));
-		json.put("host", config.getServerUrl() == null ? "127.0.0.1" : config.getServerUrl());
-		json.put("basePath", StringUtils.isNotBlank(config.getPathPrefix()) ? config.getPathPrefix()
-				: DocGlobalConstants.PATH_DELIMITER);
+		Swagger json = new Swagger().setInfo(buildInfo(config))
+			.setHost(config.getServerUrl() == null ? "127.0.0.1" : config.getServerUrl())
+			.setBasePath(StringUtils.isNotBlank(config.getPathPrefix()) ? config.getPathPrefix()
+					: DocGlobalConstants.PATH_DELIMITER);
 		Set<OpenApiTag> tags = new HashSet<>();
-		json.put("tags", tags);
-		json.put("paths", buildPaths(config, apiSchema, tags, true));
-		json.put("definitions", buildComponentsSchema(apiSchema));
+		json.setTags(tags);
+		json.setPaths(buildPaths(config, apiSchema, tags, true));
+		json.setDefinitions(this.buildComponentData(apiSchema));
 
 		String filePath = config.getOutPath();
 		filePath = filePath + DocGlobalConstants.OPEN_API_JSON;
@@ -140,11 +145,10 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	 * Build openapi info
 	 * @param apiConfig Configuration of smart-doc
 	 */
-	private static Map<String, Object> buildInfo(ApiConfig apiConfig) {
-		Map<String, Object> infoMap = new HashMap<>(8);
-		infoMap.put("title", apiConfig.getProjectName() == null ? "Project Name is Null." : apiConfig.getProjectName());
-		infoMap.put("version", "1.0.0");
-		return infoMap;
+	private static Info buildInfo(ApiConfig apiConfig) {
+		return new Info()
+			.setTitle(apiConfig.getProjectName() == null ? "Project Name is Null." : apiConfig.getProjectName())
+			.setVersion("1.0.0");
 	}
 
 	/**
@@ -166,48 +170,48 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	}
 
 	/**
-	 * Build request
+	 * Build the operation of a method.
 	 * @param apiConfig Configuration of smart-doc
-	 * @param apiMethodDoc ApiMethodDoc
-	 * @param apiDoc apiDoc
+	 * @param apiMethodDoc Data of method
+	 * @param apiDoc single api doc
+	 * @param apiExceptionStatuses Exception status list
+	 * @return operation of the method
 	 */
-	public Map<String, Object> buildPathUrlsRequest(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, ApiDoc apiDoc,
+	@Override
+	public Operation buildPathUrlsRequest(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc, ApiDoc apiDoc,
 			List<ApiExceptionStatus> apiExceptionStatuses) {
-		Map<String, Object> request = new HashMap<>(20);
-		request.put("summary", apiMethodDoc.getDesc());
-		request.put("description", apiMethodDoc.getDetail());
-		request.put("tags",
-				Stream.of(apiDoc.getName(), apiDoc.getDesc(), apiMethodDoc.getGroup())
-					.filter(StringUtil::isNotEmpty)
-					.toArray(String[]::new));
-		List<Map<String, Object>> parameters = this.buildParameters(apiMethodDoc);
+		Operation operation = new Operation();
+		operation.setSummary(apiMethodDoc.getDesc());
+		operation.setDescription(apiMethodDoc.getDetail());
+		operation.setTags(Stream.of(apiDoc.getName(), apiDoc.getDesc(), apiMethodDoc.getGroup())
+			.filter(StringUtil::isNotEmpty)
+			.collect(Collectors.toList()));
+		List<Parameter> parameters = this.buildParameters(apiMethodDoc);
 		// requestBody
 		if (CollectionUtil.isNotEmpty(apiMethodDoc.getRequestParams())) {
-			Map<String, Object> parameter = new HashMap<>(16);
-			parameter.put("in", "body");
-			parameter.putAll(this.buildContentBody(apiConfig, apiMethodDoc, false));
+			Parameter parameter = new Parameter().setIn("body");
+			OpenApiMediaType mediaType = this.buildContentBody(apiConfig, apiMethodDoc, false);
+			parameter.setSchema(mediaType.getSchema());
+			parameter.setName(mediaType.getName());
 			parameters.add(parameter);
 		}
 		if (this.hasFile(parameters)) {
-			List<String> formData = new ArrayList<>();
-			formData.add(MediaType.MULTIPART_FORM_DATA);
-			request.put("consumes", formData);
+			operation.setConsumes(Collections.singletonList(MediaType.MULTIPART_FORM_DATA));
 		}
-		request.put("parameters", parameters);
-		request.put("responses", this.buildResponses(apiConfig, apiMethodDoc, apiExceptionStatuses));
-		request.put("deprecated", apiMethodDoc.isDeprecated());
+		operation.setParameters(parameters);
+		operation.setResponses(this.buildResponses(apiConfig, apiMethodDoc, apiExceptionStatuses));
+		operation.setDeprecated(apiMethodDoc.isDeprecated());
 		OperationIdStrategyEnum operationIdStrategy = apiConfig.getOperationIdStrategy();
 		if (Objects.isNull(operationIdStrategy)) {
 			// Keep the historical Swagger operationId when no strategy is configured.
-			request.put("operationId",
+			operation.setOperationId(
 					apiMethodDoc.getName() + "_" + apiMethodDoc.getMethodId() + "UsingOn" + apiMethodDoc.getType());
 		}
 		else {
-			request.put("operationId",
-					this.buildOperationId(operationIdStrategy, apiMethodDoc, OPERATIONID_ORDER_NO_MAP));
+			operation
+				.setOperationId(this.buildOperationId(operationIdStrategy, apiMethodDoc, OPERATIONID_ORDER_NO_MAP));
 		}
-
-		return request;
+		return operation;
 	}
 
 	/**
@@ -215,9 +219,9 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	 * @param parameters list of parameters
 	 * @return true if it contains a file
 	 */
-	private boolean hasFile(List<Map<String, Object>> parameters) {
-		for (Map<String, Object> param : parameters) {
-			if (DocGlobalConstants.SWAGGER_FILE_TAG.equals(param.get("in"))) {
+	private boolean hasFile(List<Parameter> parameters) {
+		for (Parameter param : parameters) {
+			if (DocGlobalConstants.SWAGGER_FILE_TAG.equals(param.getIn())) {
 				return true;
 			}
 		}
@@ -225,103 +229,106 @@ public class SwaggerBuilder extends AbstractOpenApiBuilder {
 	}
 
 	/**
-	 * response body
-	 * @param apiMethodDoc ApiMethodDoc
+	 * Build the response body of a method.
+	 * @param apiConfig Configuration of smart-doc
+	 * @param apiMethodDoc Data of method
+	 * @return response body
 	 */
 	@Override
-	public Map<String, Object> buildResponsesBody(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc) {
-		Map<String, Object> responseBody = new HashMap<>(10);
-		responseBody.put("description", "OK");
+	public SwaggerResponse buildResponsesBody(ApiConfig apiConfig, ApiMethodDoc apiMethodDoc) {
+		SwaggerResponse responseBody = new SwaggerResponse().setDescription("OK");
 		if (CollectionUtil.isNotEmpty(apiMethodDoc.getResponseParams())
 				|| Objects.nonNull(apiMethodDoc.getReturnSchema())) {
-			responseBody.putAll(this.buildContentBody(apiConfig, apiMethodDoc, true));
+			OpenApiMediaType mediaType = this.buildContentBody(apiConfig, apiMethodDoc, true);
+			responseBody.setSchema(mediaType.getSchema());
 		}
 		return responseBody;
 	}
 
+	/**
+	 * Build the request parameters of a method.
+	 * @param apiMethodDoc API data for the method
+	 * @return parameter list
+	 */
 	@Override
-	public List<Map<String, Object>> buildParameters(ApiMethodDoc apiMethodDoc) {
-		{
-			Map<String, Object> parameters;
-			List<Map<String, Object>> parametersList = new ArrayList<>();
-			// Handling path parameters
-			for (ApiParam apiParam : apiMethodDoc.getPathParams()) {
-				parameters = this.getStringParams(apiParam, false);
-				parameters.put("type", DocUtil.javaTypeToOpenApiTypeConvert(apiParam.getType()));
-				parameters.put("in", "path");
-				parametersList.add(parameters);
-			}
-			for (ApiParam apiParam : apiMethodDoc.getQueryParams()) {
-				if (apiParam.getType().equals(ParamTypeConstants.PARAM_TYPE_ARRAY) || apiParam.isHasItems()) {
-					parameters = this.getStringParams(apiParam, false);
-					parameters.put("type", ParamTypeConstants.PARAM_TYPE_ARRAY);
-					parameters.put("items", this.getStringParams(apiParam, true));
-					parametersList.add(parameters);
-				}
-				else {
-					parameters = this.getStringParams(apiParam, false);
-					parameters.put("type", DocUtil.javaTypeToOpenApiTypeConvert(apiParam.getType()));
-					parametersList.add(parameters);
-				}
-			}
-			// with headers
-			if (!CollectionUtil.isEmpty(apiMethodDoc.getRequestHeaders())) {
-				for (ApiReqParam header : apiMethodDoc.getRequestHeaders()) {
-					parameters = new HashMap<>(20);
-					parameters.put("name", header.getName());
-					parameters.put("type", DocUtil.javaTypeToOpenApiTypeConvert(header.getType()));
-					parameters.put("description", header.getDesc());
-					parameters.put("required", header.isRequired());
-					parameters.put("example", getExampleValueBasedOnTypeForApiReqParam(header));
-					parameters.put("schema", buildParametersSchema(header));
-					parameters.put("in", "header");
-					parametersList.add(parameters);
-				}
-			}
-			return parametersList;
+	public List<Parameter> buildParameters(ApiMethodDoc apiMethodDoc) {
+		List<Parameter> parametersList = new ArrayList<>();
+		// Handling path parameters
+		for (ApiParam apiParam : apiMethodDoc.getPathParams()) {
+			Parameter parameter = this.getStringParams(apiParam, false);
+			parameter.setType(DocUtil.javaTypeToOpenApiTypeConvert(apiParam.getType()));
+			parameter.setIn("path");
+			parametersList.add(parameter);
 		}
-	}
-
-	@Override
-	public Map<String, Object> getStringParams(ApiParam apiParam, boolean hasItems) {
-		Map<String, Object> parameters;
-		parameters = new HashMap<>(20);
-		if (!hasItems) {
-			if ("file".equalsIgnoreCase(apiParam.getType())) {
-				parameters.put("in", DocGlobalConstants.SWAGGER_FILE_TAG);
+		for (ApiParam apiParam : apiMethodDoc.getQueryParams()) {
+			if (apiParam.getType().equals(ParamTypeConstants.PARAM_TYPE_ARRAY) || apiParam.isHasItems()) {
+				Parameter parameter = this.getStringParams(apiParam, false);
+				parameter.setType(ParamTypeConstants.PARAM_TYPE_ARRAY);
+				parameter.setItems(this.getStringParams(apiParam, true));
+				parametersList.add(parameter);
 			}
 			else {
-				parameters.put("in", "query");
+				Parameter parameter = this.getStringParams(apiParam, false);
+				parameter.setType(DocUtil.javaTypeToOpenApiTypeConvert(apiParam.getType()));
+				parametersList.add(parameter);
 			}
-			parameters.put("name", apiParam.getField());
-			parameters.put("description", apiParam.getDesc());
-			parameters.put("required", apiParam.isRequired());
-			parameters.put("type", apiParam.getType());
+		}
+		// with headers
+		if (!CollectionUtil.isEmpty(apiMethodDoc.getRequestHeaders())) {
+			for (ApiReqParam header : apiMethodDoc.getRequestHeaders()) {
+				Parameter parameter = new Parameter().setName(header.getName())
+					.setType(DocUtil.javaTypeToOpenApiTypeConvert(header.getType()))
+					.setDescription(header.getDesc())
+					.setRequired(header.isRequired())
+					.setExample(getExampleValueBasedOnTypeForApiReqParam(header))
+					.setSchema(buildParametersSchema(header))
+					.setIn("header");
+				parametersList.add(parameter);
+			}
+		}
+		return parametersList;
+	}
+
+	/**
+	 * Build one request parameter.
+	 * @param apiParam ApiParam
+	 * @param hasItems whether the parameter is the item definition of an array
+	 * @return parameter of the api param
+	 */
+	@Override
+	public Parameter getStringParams(ApiParam apiParam, boolean hasItems) {
+		Parameter parameter = new Parameter();
+		if (!hasItems) {
+			if ("file".equalsIgnoreCase(apiParam.getType())) {
+				parameter.setIn(DocGlobalConstants.SWAGGER_FILE_TAG);
+			}
+			else {
+				parameter.setIn("query");
+			}
+			parameter.setName(apiParam.getField());
+			parameter.setDescription(apiParam.getDesc());
+			parameter.setRequired(apiParam.isRequired());
+			parameter.setType(apiParam.getType());
 		}
 		else {
 			if (ParamTypeConstants.PARAM_TYPE_OBJECT.equals(apiParam.getType())
 					|| (ParamTypeConstants.PARAM_TYPE_ARRAY.equals(apiParam.getType()) && apiParam.isHasItems())) {
-				parameters.put("type", "object(complex POJO please use @RequestBody)");
+				parameter.setType("object(complex POJO please use @RequestBody)");
 			}
 			else {
 				String desc = apiParam.getDesc();
 				if (desc.contains(ParamTypeConstants.PARAM_TYPE_FILE)) {
-					parameters.put("type", ParamTypeConstants.PARAM_TYPE_FILE);
+					parameter.setType(ParamTypeConstants.PARAM_TYPE_FILE);
 				}
 				else if (desc.contains("string")) {
-					parameters.put("type", "string");
+					parameter.setType("string");
 				}
 				else {
-					parameters.put("type", "integer");
+					parameter.setType("integer");
 				}
 			}
 		}
-		return parameters;
-	}
-
-	@Override
-	public Map<String, Object> buildComponentsSchema(ApiSchema<ApiDoc> apiSchema) {
-		return this.buildComponentData(apiSchema);
+		return parameter;
 	}
 
 }
