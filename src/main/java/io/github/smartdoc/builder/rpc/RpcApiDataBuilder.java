@@ -20,12 +20,10 @@
  */
 package io.github.smartdoc.builder.rpc;
 
-import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.rpc.RpcApiAllData;
 import io.github.smartdoc.model.rpc.RpcApiDoc;
-import com.power.common.util.StringUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 
 /**
@@ -49,9 +47,6 @@ public class RpcApiDataBuilder {
 	 */
 	public static RpcApiAllData<RpcApiDoc> getApiData(ApiConfig config) {
 		config.setShowJavaType(true);
-		if (StringUtil.isEmpty(config.getFramework())) {
-			config.setFramework(FrameworkEnum.DUBBO.getFramework());
-		}
 		RpcDocBuilderTemplate builderTemplate = new RpcDocBuilderTemplate();
 		builderTemplate.checkAndInitForGetApiData(config);
 		JavaProjectBuilder javaProjectBuilder = JavaProjectBuilderHelper.create();

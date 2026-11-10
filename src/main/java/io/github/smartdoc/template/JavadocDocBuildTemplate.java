@@ -25,6 +25,7 @@ import io.github.smartdoc.constants.DocTags;
 import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiSchema;
+import io.github.smartdoc.model.IDoc;
 import io.github.smartdoc.model.JavadocJavaMethod;
 import io.github.smartdoc.model.WebSocketDoc;
 import io.github.smartdoc.model.annotation.FrameworkAnnotations;
@@ -53,6 +54,11 @@ public class JavadocDocBuildTemplate implements IDocBuildTemplate<JavadocApiDoc>
 	@Override
 	public boolean supportsFramework(String framework) {
 		return FrameworkEnum.JAVADOC.getFramework().equalsIgnoreCase(framework);
+	}
+
+	@Override
+	public Class<? extends IDoc> documentType() {
+		return JavadocApiDoc.class;
 	}
 
 	@Override

@@ -23,8 +23,8 @@ package io.github.smartdoc.builder.grpc;
 
 import io.github.smartdoc.builder.IRpcDocBuilderTemplate;
 import io.github.smartdoc.constants.DocGlobalConstants;
-import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.constants.TemplateVariable;
+import io.github.smartdoc.generation.GoalFamily;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDocDict;
 import io.github.smartdoc.model.ApiErrorCode;
@@ -33,7 +33,6 @@ import io.github.smartdoc.utils.BeetlTemplateUtil;
 import io.github.smartdoc.utils.DocUtil;
 import com.power.common.util.CollectionUtil;
 import com.power.common.util.FileUtil;
-import com.power.common.util.StringUtil;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import org.beetl.core.Template;
 
@@ -50,10 +49,12 @@ import java.util.Map;
 public class GrpcDocBuilderTemplate implements IRpcDocBuilderTemplate<GrpcApiDoc> {
 
 	@Override
+	public GoalFamily goalFamily() {
+		return GoalFamily.GRPC;
+	}
+
+	@Override
 	public void checkAndInit(ApiConfig config, boolean checkOutPath) {
-		if (StringUtil.isEmpty(config.getFramework())) {
-			config.setFramework(FrameworkEnum.GRPC.getFramework());
-		}
 		IRpcDocBuilderTemplate.super.checkAndInit(config, checkOutPath);
 		config.setOutPath(config.getOutPath() + DocGlobalConstants.FILE_SEPARATOR + DocGlobalConstants.GRPC_OUT_DIR);
 	}

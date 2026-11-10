@@ -51,6 +51,7 @@ import io.github.smartdoc.model.DocJavaMethod;
 import io.github.smartdoc.model.DocJavaParameter;
 import io.github.smartdoc.model.ExceptionAdviceMethod;
 import io.github.smartdoc.model.FormData;
+import io.github.smartdoc.model.IDoc;
 import io.github.smartdoc.model.WebSocketDoc;
 import io.github.smartdoc.model.annotation.EntryAnnotation;
 import io.github.smartdoc.model.annotation.FrameworkAnnotations;
@@ -112,6 +113,11 @@ public class JAXRSDocBuildTemplate implements IDocBuildTemplate<ApiDoc>, IWebSoc
 	@Override
 	public boolean supportsFramework(String framework) {
 		return FrameworkEnum.JAX_RS.getFramework().equalsIgnoreCase(framework);
+	}
+
+	@Override
+	public Class<? extends IDoc> documentType() {
+		return ApiDoc.class;
 	}
 
 	@Override

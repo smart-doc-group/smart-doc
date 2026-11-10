@@ -31,7 +31,9 @@ import io.github.smartdoc.constants.MediaType;
 import io.github.smartdoc.constants.Methods;
 import io.github.smartdoc.constants.OperationIdStrategyEnum;
 import io.github.smartdoc.constants.ParamTypeConstants;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
+import io.github.smartdoc.generation.GoalFamily;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
 import io.github.smartdoc.model.ApiExceptionStatus;
@@ -591,6 +593,8 @@ public abstract class AbstractOpenApiBuilder {
 	 * @param config Configuration of smart-doc
 	 * @param projectBuilder JavaDocBuilder of QDox
 	 * @return List of OpenAPI's document data
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public ApiSchema<ApiDoc> getOpenApiDocs(ApiConfig config, JavaProjectBuilder projectBuilder) {
 		config.setShowJavaType(false);
@@ -598,8 +602,8 @@ public abstract class AbstractOpenApiBuilder {
 		builderTemplate.checkAndInit(config, Boolean.TRUE);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, projectBuilder);
 		config.setParamsDataToTree(true);
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = TemplateResolver.<ApiDoc>resolve(config, GoalFamily.REST)
+			.template();
 		return docBuildTemplate.getApiData(configBuilder);
 	}
 

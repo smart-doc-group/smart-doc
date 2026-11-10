@@ -22,13 +22,14 @@ package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.DocLanguage;
-import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.constants.HighLightJsConstants;
 import io.github.smartdoc.constants.TemplateVariable;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
+import io.github.smartdoc.generation.DocContext;
+import io.github.smartdoc.generation.GoalFamily;
 import io.github.smartdoc.generation.RunClock;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.model.*;
-import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
 import io.github.smartdoc.utils.DocUtil;
 import com.power.common.util.CollectionUtil;
@@ -65,6 +66,19 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 	Logger log = Logger.getLogger(IBaseDocBuilderTemplate.class.getName());
 
 	/**
+	 * Returns the goal family this builder serves.
+	 * <p>
+	 * The family decides the default framework and the document type the resolved
+	 * template must produce. Implementations that do not override it are treated as REST
+	 * builders, which matches the historical behaviour of
+	 * {@link io.github.smartdoc.builder.DocBuilderTemplate}.
+	 * @return goal family
+	 */
+	default GoalFamily goalFamily() {
+		return GoalFamily.REST;
+	}
+
+	/**
 	 * get all doc api data
 	 * @param isAsciidoc is Asciidoc
 	 * @param showJavaType show java type
@@ -72,6 +86,8 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder JavaProjectBuilder
 	 * @return ApiAllData
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce the document type required by {@link #goalFamily()}
 	 */
 	default List<T> getApiDoc(boolean isAsciidoc, boolean showJavaType, boolean paramsDataToTree, ApiConfig config,
 			JavaProjectBuilder javaProjectBuilder) {
@@ -80,9 +96,8 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 		config.setParamsDataToTree(paramsDataToTree);
 		this.checkAndInit(config, Boolean.TRUE);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<T> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
-		return docBuildTemplate.getApiData(configBuilder).getApiDatas();
+		DocContext<T> context = TemplateResolver.resolve(config, this.goalFamily());
+		return context.parse(configBuilder).getApiDatas();
 	}
 
 	/**
@@ -122,9 +137,6 @@ public interface IBaseDocBuilderTemplate<T extends IDoc> {
 				.setVersion("v" + strTime)
 				.setRemarks("Created by smart-doc")
 				.setStatus("auto"));
-		}
-		if (StringUtil.isEmpty(config.getFramework())) {
-			config.setFramework(FrameworkEnum.SPRING.getFramework());
 		}
 		if (StringUtil.isEmpty(config.getAuthor())) {
 			config.setAuthor(System.getProperty("user.name"));

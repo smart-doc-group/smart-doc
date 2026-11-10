@@ -21,9 +21,11 @@
 package io.github.smartdoc.builder;
 
 import io.github.smartdoc.constants.DocGlobalConstants;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
 import io.github.smartdoc.generation.DocGenerator;
+import io.github.smartdoc.generation.GoalFamily;
 import io.github.smartdoc.generation.RenderFormat;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
@@ -81,11 +83,13 @@ public class AdocDocBuilder {
 	 * @param schema parsed api schema
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder qdox project builder
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public static void render(ApiSchema<ApiDoc> schema, ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = TemplateResolver.<ApiDoc>resolve(config, GoalFamily.REST)
+			.template();
 		List<ApiDoc> apiDocList = schema.getApiDatas();
 		if (config.isAllInOne()) {
 			String docName = builderTemplate.allInOneDocName(config, INDEX_DOC, DocGlobalConstants.ASCIIDOC_EXTENSION);

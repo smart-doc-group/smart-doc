@@ -20,7 +20,6 @@
  */
 package io.github.smartdoc.builder.javadoc;
 
-import io.github.smartdoc.constants.FrameworkEnum;
 import io.github.smartdoc.helper.JavaProjectBuilderHelper;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.javadoc.JavadocApiAllData;
@@ -48,7 +47,6 @@ public class JavadocApiDataBuilder {
 	 */
 	public static JavadocApiAllData getApiData(ApiConfig config) {
 		config.setShowJavaType(true);
-		config.setFramework(FrameworkEnum.JAVADOC.getFramework());
 		JavadocDocBuilderTemplate builderTemplate = new JavadocDocBuilderTemplate();
 		builderTemplate.checkAndInitForGetApiData(config);
 		JavaProjectBuilder javaProjectBuilder = JavaProjectBuilderHelper.create();

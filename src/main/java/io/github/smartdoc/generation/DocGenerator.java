@@ -30,7 +30,7 @@ import io.github.smartdoc.builder.ProjectDocConfigBuilder;
 import io.github.smartdoc.builder.WordDocBuilder;
 import io.github.smartdoc.builder.openapi.OpenApiBuilder;
 import io.github.smartdoc.builder.openapi.SwaggerBuilder;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDoc;
 import io.github.smartdoc.model.ApiSchema;
@@ -107,6 +107,8 @@ public class DocGenerator {
 	 * reproducible.
 	 * @param formats output formats
 	 * @param now timestamp in milliseconds
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce {@link ApiDoc}
 	 */
 	public void generate(Collection<RenderFormat> formats, long now) {
 		snapshots.clear();
@@ -156,8 +158,8 @@ public class DocGenerator {
 		DocBuilderTemplate builderTemplate = new DocBuilderTemplate();
 		builderTemplate.checkAndInit(config, Boolean.TRUE);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<ApiDoc> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
+		IDocBuildTemplate<ApiDoc> docBuildTemplate = TemplateResolver.<ApiDoc>resolve(config, GoalFamily.REST)
+			.template();
 		ParseSnapshot snapshot = new ParseSnapshot(key, docBuildTemplate.getApiData(configBuilder));
 		snapshots.put(key, snapshot);
 		return snapshot;

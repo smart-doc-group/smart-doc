@@ -37,6 +37,7 @@ import io.github.smartdoc.model.ApiParam;
 import io.github.smartdoc.model.ApiReqParam;
 import io.github.smartdoc.model.ApiSchema;
 import io.github.smartdoc.model.ExceptionAdviceMethod;
+import io.github.smartdoc.model.IDoc;
 import io.github.smartdoc.model.WebSocketDoc;
 import io.github.smartdoc.model.annotation.EntryAnnotation;
 import io.github.smartdoc.model.annotation.ExceptionAdviceAnnotation;
@@ -78,6 +79,11 @@ public class SpringBootDocBuildTemplate implements IDocBuildTemplate<ApiDoc>, IW
 	@Override
 	public boolean supportsFramework(String framework) {
 		return FrameworkEnum.SPRING.getFramework().equalsIgnoreCase(framework);
+	}
+
+	@Override
+	public Class<? extends IDoc> documentType() {
+		return ApiDoc.class;
 	}
 
 	@Override

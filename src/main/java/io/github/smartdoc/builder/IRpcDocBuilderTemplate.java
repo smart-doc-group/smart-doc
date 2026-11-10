@@ -23,14 +23,16 @@ package io.github.smartdoc.builder;
 import io.github.smartdoc.constants.DocGlobalConstants;
 import io.github.smartdoc.constants.TemplateVariable;
 import io.github.smartdoc.constants.TornaConstants;
-import io.github.smartdoc.factory.BuildTemplateFactory;
+import io.github.smartdoc.exception.UnsupportedGoalFrameworkException;
+import io.github.smartdoc.generation.DocContext;
+import io.github.smartdoc.generation.GoalFamily;
+import io.github.smartdoc.generation.TemplateResolver;
 import io.github.smartdoc.model.AbstractRpcApiDoc;
 import io.github.smartdoc.model.ApiConfig;
 import io.github.smartdoc.model.ApiDocDict;
 import io.github.smartdoc.model.ApiErrorCode;
 import io.github.smartdoc.model.rpc.RpcApiAllData;
 import io.github.smartdoc.model.rpc.RpcApiDoc;
-import io.github.smartdoc.template.IDocBuildTemplate;
 import io.github.smartdoc.utils.BeetlTemplateUtil;
 import io.github.smartdoc.utils.DocUtil;
 import com.power.common.util.CollectionUtil;
@@ -56,6 +58,18 @@ public interface IRpcDocBuilderTemplate<T extends AbstractRpcApiDoc<?>> extends 
 	 * Add dependency title
 	 */
 	String DEPENDENCY_TITLE = "Add dependency";
+
+	/**
+	 * Returns the RPC goal family.
+	 * <p>
+	 * Overriding the REST default here keeps third-party RPC builders working: they
+	 * resolve the dubbo template even when they do not declare a family themselves.
+	 * @return RPC goal family
+	 */
+	@Override
+	default GoalFamily goalFamily() {
+		return GoalFamily.RPC;
+	}
 
 	/**
 	 * Create empty api doc.
@@ -219,14 +233,15 @@ public interface IRpcDocBuilderTemplate<T extends AbstractRpcApiDoc<?>> extends 
 	 * @param config ApiConfig
 	 * @param javaProjectBuilder JavaProjectBuilder
 	 * @return ApiAllData
+	 * @throws UnsupportedGoalFrameworkException when the configured framework cannot
+	 * produce the document type required by {@link #goalFamily()}
 	 */
 	default List<T> listOfApiData(ApiConfig config, JavaProjectBuilder javaProjectBuilder) {
 		this.checkAndInitForGetApiData(config);
 		config.setMd5EncryptedHtmlName(true);
 		ProjectDocConfigBuilder configBuilder = new ProjectDocConfigBuilder(config, javaProjectBuilder);
-		IDocBuildTemplate<T> docBuildTemplate = BuildTemplateFactory.getDocBuildTemplate(config.getFramework(),
-				config.getClassLoader());
-		return docBuildTemplate.getApiData(configBuilder).getApiDatas();
+		DocContext<T> context = TemplateResolver.resolve(config, this.goalFamily());
+		return context.parse(configBuilder).getApiDatas();
 	}
 
 }
