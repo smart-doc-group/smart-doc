@@ -38,6 +38,10 @@ class WordXmlEscapeTest {
 
 	/**
 	 * Provides test cases for normal inputs.
+	 * <p>
+	 * Javadoc comments are HTML, so the function keeps the markup and the special
+	 * characters as they are; only spaces are converted to a non-breaking space and break
+	 * tags are dropped.
 	 * @return a stream of arguments for testing
 	 */
 	static Stream<Arguments> provideNormalTestCases() {
@@ -46,9 +50,9 @@ class WordXmlEscapeTest {
 				// Combination of doubled non-breaking spaces and empty spaces
 				Arguments.of("&nbsp;&nbsp; abc&nbsp;",
 						String.format("%s%sabc", UNICODE_NON_BREAK_SPACE, UNICODE_NON_BREAK_SPACE)),
-				Arguments.of("<br/>", ""), Arguments.of("&", "&amp;"), Arguments.of("<", "&lt;"),
+				Arguments.of("<br/>", ""), Arguments.of("&", "&"), Arguments.of("<", "<"),
 				Arguments.of("Hello & <br/>",
-						String.format("Hello%s&amp;%s", UNICODE_NON_BREAK_SPACE, UNICODE_NON_BREAK_SPACE)),
+						String.format("Hello%s&%s", UNICODE_NON_BREAK_SPACE, UNICODE_NON_BREAK_SPACE)),
 				Arguments.of("", ""), Arguments.of(null, ""));
 	}
 

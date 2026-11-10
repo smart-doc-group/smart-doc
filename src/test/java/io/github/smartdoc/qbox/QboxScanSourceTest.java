@@ -37,7 +37,10 @@ public class QboxScanSourceTest {
 		config.setAllInOne(true);
 		config.setOutPath(outPath);
 		config.setMd5EncryptedHtmlName(true);
-		config.setFramework(FrameworkEnum.DUBBO.getFramework());
+		config.setFramework(FrameworkEnum.SPRING.getFramework());
+		// DocBuildHelper requires both directories when it looks for the dependency tree
+		config.setBaseDir(outPath);
+		config.setCodePath(testJavaDirectory);
 		config.setSourceCodePaths(SourceCodePath.builder().setDesc("tesSourceScan").setPath(testJavaDirectory));
 
 		// This bug caused not all source code to be found.
