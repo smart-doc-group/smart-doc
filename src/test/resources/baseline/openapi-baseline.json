@@ -1,0 +1,266 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "fixture",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080"
+    }
+  ],
+  "tags": [
+    {
+      "name": "UserController",
+      "description": "User api"
+    }
+  ],
+  "paths": {
+    "/user/{id}": {
+      "get": {
+        "summary": "Get user by id",
+        "deprecated": false,
+        "tags": [
+          "UserController"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/fc60ce2ccc8237cdc67815885e0ac6ef"
+                },
+                "examples": {
+                  "json": {
+                    "summary": "test data",
+                    "value": "{\n  \"success\": true,\n  \"code\": \"\",\n  \"data\": {\n    \"id\": 0,\n    \"name\": \"\",\n    \"status\": \"ACTIVE\",\n    \"tags\": [\n      \"\"\n    ]\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "schema": {
+              "format": "int64",
+              "type": "number"
+            },
+            "in": "path",
+            "description": "user id",
+            "required": true,
+            "example": 0,
+            "name": "id"
+          }
+        ]
+      }
+    },
+    "/user": {
+      "post": {
+        "summary": "Create user",
+        "deprecated": false,
+        "tags": [
+          "UserController"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/79a09a2f1f10f7140ad4e91e72476c58"
+              },
+              "examples": {
+                "json": {
+                  "summary": "test data",
+                  "value": "{\n  \"id\": 0,\n  \"name\": \"\",\n  \"status\": \"ACTIVE\",\n  \"tags\": [\n    \"\"\n  ]\n}"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/fc60ce2ccc8237cdc67815885e0ac6ef"
+                },
+                "examples": {
+                  "json": {
+                    "summary": "test data",
+                    "value": "{\n  \"success\": true,\n  \"code\": \"\",\n  \"data\": {\n    \"id\": 0,\n    \"name\": \"\",\n    \"status\": \"ACTIVE\",\n    \"tags\": [\n      \"\"\n    ]\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "create",
+        "parameters": []
+      }
+    },
+    "/user/list": {
+      "get": {
+        "summary": "List users",
+        "deprecated": false,
+        "tags": [
+          "UserController"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/486da5a6e075ae218a318ad8879f9d94"
+                },
+                "examples": {
+                  "json": {
+                    "summary": "test data",
+                    "value": "{\n  \"success\": true,\n  \"code\": \"\",\n  \"data\": [\n    {\n      \"id\": 0,\n      \"name\": \"\",\n      \"status\": \"ACTIVE\",\n      \"tags\": [\n        \"\"\n      ]\n    }\n  ]\n}"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "list",
+        "parameters": [
+          {
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "in": "query",
+            "description": "page size",
+            "required": true,
+            "example": 10,
+            "name": "size"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "defaultPrimitive": {
+        "format": "string",
+        "type": "string"
+      },
+      "486da5a6e075ae218a318ad8879f9d94": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "format": "boolean",
+            "description": "is successful",
+            "type": "boolean",
+            "example": true
+          },
+          "code": {
+            "format": "string",
+            "description": "error code",
+            "type": "string"
+          },
+          "data": {
+            "description": "response data",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/74369a387e2f55825cc755928713576f"
+            }
+          }
+        }
+      },
+      "fc60ce2ccc8237cdc67815885e0ac6ef": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "format": "boolean",
+            "description": "is successful",
+            "type": "boolean",
+            "example": true
+          },
+          "code": {
+            "format": "string",
+            "description": "error code",
+            "type": "string"
+          },
+          "data": {
+            "description": "response data(object)",
+            "$ref": "#/components/schemas/74369a387e2f55825cc755928713576f"
+          }
+        }
+      },
+      "79a09a2f1f10f7140ad4e91e72476c58": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "format": "int64",
+            "description": "user id",
+            "type": "number",
+            "example": 0
+          },
+          "name": {
+            "format": "string",
+            "description": "user name",
+            "type": "string"
+          },
+          "status": {
+            "format": "enum",
+            "description": "user status<br/>(See: User status)",
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ],
+            "example": "ACTIVE"
+          },
+          "tags": {
+            "description": "user tags",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": "\"\"\",\"\"\""
+          }
+        }
+      },
+      "d751713988987e9331980363e24189ce": {},
+      "74369a387e2f55825cc755928713576f": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "format": "int64",
+            "description": "user id",
+            "type": "number",
+            "example": 0
+          },
+          "name": {
+            "format": "string",
+            "description": "user name",
+            "type": "string"
+          },
+          "status": {
+            "format": "enum",
+            "description": "user status<br/>(See: User status)",
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ],
+            "example": "ACTIVE"
+          },
+          "tags": {
+            "description": "user tags",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": "\"\"\",\"\"\""
+          }
+        }
+      }
+    }
+  }
+}

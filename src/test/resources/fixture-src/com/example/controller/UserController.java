@@ -1,6 +1,13 @@
 package com.example.controller;
 
 import com.example.model.Result;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import com.example.model.UserDto;
 
 /**
@@ -9,8 +16,8 @@ import com.example.model.UserDto;
  * @author fixture
  * @since 1.0.0
  */
-@org.springframework.web.bind.annotation.RestController
-@org.springframework.web.bind.annotation.RequestMapping("/user")
+@RestController
+@RequestMapping("/user")
 public class UserController {
 
 	/**
@@ -18,8 +25,8 @@ public class UserController {
 	 * @param id user id
 	 * @return user detail
 	 */
-	@org.springframework.web.bind.annotation.GetMapping("/{id}")
-	public Result<UserDto> getUser(@org.springframework.web.bind.annotation.PathVariable("id") Long id) {
+	@GetMapping("/{id}")
+	public Result<UserDto> getUser(@PathVariable("id") Long id) {
 		return null;
 	}
 
@@ -28,8 +35,8 @@ public class UserController {
 	 * @param user user info
 	 * @return created user
 	 */
-	@org.springframework.web.bind.annotation.PostMapping
-	public Result<UserDto> create(@org.springframework.web.bind.annotation.RequestBody UserDto user) {
+	@PostMapping
+	public Result<UserDto> create(@RequestBody UserDto user) {
 		return null;
 	}
 
@@ -38,9 +45,9 @@ public class UserController {
 	 * @param size page size
 	 * @return user list
 	 */
-	@org.springframework.web.bind.annotation.GetMapping("/list")
+	@GetMapping("/list")
 	public Result<java.util.List<UserDto>> list(
-			@org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") Integer size) {
+			@RequestParam(defaultValue = "10") Integer size) {
 		return null;
 	}
 
